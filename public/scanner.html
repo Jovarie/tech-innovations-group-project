@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+        />
+        <title>AR Maintenance // Scanner</title>
+        <link rel="stylesheet" href="/css/style.css" />
+    </head>
+    <body class="scene">
+        <div id="scene">
+            <video id="video" autoplay playsinline muted></video>
+            <canvas id="frame"></canvas>
+            <canvas id="overlay"></canvas>
+
+            <div id="scanner-bar">
+                <div class="left">
+                    <span class="pulse"></span>
+                    <span>AR Maint // Live</span>
+                    <span id="status-text">SCANNING…</span>
+                </div>
+                <div class="right">
+                    <a href="/">Home</a>
+                    <a href="/dashboard.html">Dashboard</a>
+                    <span data-user-widget></span>
+                </div>
+            </div>
+
+            <div id="reticle">
+                <div class="corner tl"></div>
+                <div class="corner tr"></div>
+                <div class="corner bl"></div>
+                <div class="corner br"></div>
+            </div>
+            <div id="hint">ALIGN QR MARKER WITHIN FRAME</div>
+
+            <div id="label" aria-hidden="true">
+                <div class="label-card">
+                    <span class="corner-tag tl"></span>
+                    <span class="corner-tag tr"></span>
+                    <span class="corner-tag bl"></span>
+                    <span class="corner-tag br"></span>
+                    <div class="label-tag" id="label-tag">FAULT DETECTED</div>
+                    <div class="label-title" id="label-title">—</div>
+                    <div class="label-direction" id="label-direction">—</div>
+                    <div class="label-desc" id="label-desc">—</div>
+                    <div class="label-meta">
+                        <span id="label-priority">—</span>
+                        <span id="label-zone">—</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="gate">
+                <h1>AR Scanner Ready</h1>
+                <p>
+                    Grant camera access to begin scanning fault markers.<br />
+                    Try printing one of the QR payloads below:
+                    <strong>FAULT-101</strong>, <strong>FAULT-102</strong>,
+                    <strong>FAULT-103</strong>.
+                </p>
+                <button class="btn" id="start-btn">Start Camera</button>
+                <small id="gate-error"></small>
+            </div>
+        </div>
+
+        <!-- jsQR for QR detection -->
+        <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+        <script src="/js/auth.js"></script>
+        <script src="/js/scanner.js"></script>
+    </body>
+</html>

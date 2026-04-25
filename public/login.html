@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>AR Maintenance // Login</title>
+        <link rel="stylesheet" href="/css/style.css" />
+    </head>
+    <body>
+        <header class="topbar">
+            <div class="brand">
+                <span class="pulse"></span>
+                <span>AR Maint // Secure Access</span>
+            </div>
+            <nav>
+                <a href="/">Home</a>
+            </nav>
+        </header>
+
+        <main class="login-wrap">
+            <form class="login-card" id="login-form" autocomplete="off">
+                <h2>Engineer Login</h2>
+                <p class="hint">Authorised personnel only</p>
+
+                <div class="error" id="error" style="display: none"></div>
+
+                <label for="username">Username</label>
+                <input
+                    id="username"
+                    name="username"
+                    type="text"
+                    required
+                    autocomplete="username"
+                />
+
+                <label for="password">Password</label>
+                <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    required
+                    autocomplete="current-password"
+                />
+
+                <button class="btn" type="submit">Sign In</button>
+
+                <div class="demo-creds">
+                    Demo credentials:<br />
+                    <strong>engineer / maintain123</strong>
+                </div>
+            </form>
+        </main>
+
+        <script src="/js/auth.js"></script>
+        <script>
+            const params = new URLSearchParams(window.location.search);
+            const next = params.get("next") || "/";
+
+            if (Auth.isLoggedIn()) {
+                window.location.href = next;
+            }
+
+            const form = document.getElementById("login-form");
+            const errorBox = document.getElementById("error");
+
+            form.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                errorBox.style.display = "none";
+                const username = document
+                    .getElementById("username")
+                    .value.trim();
+                const password = document.getElementById("password").value;
+
+                try {
+                    const res = await fetch("/login", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ username, password }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok) {
+                        errorBox.textContent = data.error || "Login failed";
+                        errorBox.style.display = "block";
+                        return;
+                    }
+                    Auth.setSession(data.token, data.user);
+                    window.location.href = next;
+                } catch (err) {
+                    errorBox.textContent = "Network error: " + err.message;
+                    errorBox.style.display = "block";
+                }
+            });
+        </script>
+    </body>
+</html>

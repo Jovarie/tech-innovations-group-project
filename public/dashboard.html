@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>AR Maintenance // Dashboard</title>
+        <link rel="stylesheet" href="/css/style.css" />
+    </head>
+    <body>
+        <header class="topbar">
+            <div class="brand">
+                <span class="pulse"></span>
+                <span>AR Maint // Operations Dashboard</span>
+            </div>
+            <nav>
+                <a href="/">Home</a>
+                <a href="/scanner.html">Scanner</a>
+                <a href="/dashboard.html" class="active">Dashboard</a>
+                <span data-user-widget></span>
+            </nav>
+        </header>
+
+        <main class="dash">
+            <h2>Fault Status Overview</h2>
+            <div class="sub">
+                Live snapshot of reported faults across the network
+            </div>
+
+            <div class="metric-row" id="metrics">
+                <div class="metric">
+                    <div class="lbl">Total Faults</div>
+                    <div class="val" id="m-total">—</div>
+                </div>
+                <div class="metric">
+                    <div class="lbl">Open</div>
+                    <div class="val" id="m-open">—</div>
+                </div>
+                <div class="metric">
+                    <div class="lbl">In Progress</div>
+                    <div class="val" id="m-progress">—</div>
+                </div>
+                <div class="metric">
+                    <div class="lbl">Critical</div>
+                    <div class="val" id="m-critical">—</div>
+                </div>
+            </div>
+
+            <div class="table-wrap">
+                <table class="faults" id="faults-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Zone</th>
+                            <th>Location</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Reported</th>
+                        </tr>
+                    </thead>
+                    <tbody id="faults-body">
+                        <tr>
+                            <td colspan="7" class="empty-state">
+                                Loading fault registry…
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+
+        <script src="/js/auth.js"></script>
+        <script src="/js/dashboard.js"></script>
+    </body>
+</html>
