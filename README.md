@@ -7,6 +7,31 @@ npm install,
 npm start,
 # open http://localhost:3000
 
+## Testing AR scanner on Mobile
+
+The scanner uses your phone's camera, we use [ngrok](https://ngrok.com) to give
+our local server a temporary public HTTPS URL.
+
+### One-time setup
+
+1. Sign up for a free account at [ngrok.com](https://ngrok.com).
+2. Download and install the ngrok app for your operating system.
+3. Copy your auth token from the ngrok dashboard, then run:
+   ```bash
+   ngrok config add-authtoken YOUR_TOKEN_HERE
+   
+4. Each time you want to test on a phone
+In one terminal, start the app as normal:
+npm start
+
+In a second terminal, start the tunnel:
+ngrok http 3000
+
+ngrok will print a line like:
+Forwarding   https://abc123.ngrok-free.app -> http://localhost:3000
+
+5. copy the forwarding link into your mobile browser.
+
 Demo credentials
 Username: engineer
 Password: maintain123
