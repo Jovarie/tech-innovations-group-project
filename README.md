@@ -1,10 +1,10 @@
 AR-Maintenance Support System
 Web-based AR overlay that scans QR fault markers placed in a public-transport environment and surfaces fault location and description on a live camera feed, backed by a Node.js + Express server with JWT authentication and a small operations dashboard.
 
-How to run
-cd into folder
-npm install
-npm start
+How to run:
+cd into folder,
+npm install,
+npm start,
 # open http://localhost:3000
 
 Demo credentials
