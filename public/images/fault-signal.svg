@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 140">
+  <rect width="200" height="140" fill="#02080d"/>
+
+  <!-- Cabinet body -->
+  <rect x="30" y="10" width="140" height="105" fill="rgba(0,240,255,0.04)" stroke="#00f0ff" stroke-width="1.5" opacity="0.85"/>
+  <!-- Door centre seam -->
+  <line x1="100" y1="10" x2="100" y2="115" stroke="#00f0ff" stroke-width="0.5" opacity="0.35"/>
+  <!-- Top handle rail -->
+  <rect x="40" y="15" width="120" height="5" fill="#00f0ff" opacity="0.2"/>
+
+  <!-- Relay coil A -->
+  <circle cx="65" cy="50" r="14" fill="none" stroke="#ffcc00" stroke-width="1.5"/>
+  <circle cx="65" cy="50" r="7"  fill="none" stroke="#ffcc00" stroke-width="1"/>
+  <circle cx="65" cy="50" r="2"  fill="#ffcc00" opacity="0.6"/>
+  <!-- Relay coil B -->
+  <circle cx="100" cy="50" r="14" fill="none" stroke="#ffcc00" stroke-width="1.5"/>
+  <circle cx="100" cy="50" r="7"  fill="none" stroke="#ffcc00" stroke-width="1"/>
+  <circle cx="100" cy="50" r="2"  fill="#ffcc00" opacity="0.6"/>
+  <!-- Relay coil C (healthy) -->
+  <circle cx="135" cy="50" r="14" fill="none" stroke="#00f0ff" stroke-width="1.5"/>
+  <circle cx="135" cy="50" r="7"  fill="none" stroke="#00f0ff" stroke-width="1"/>
+  <circle cx="135" cy="50" r="2"  fill="#00f0ff" opacity="0.6"/>
+
+  <!-- Wiring traces -->
+  <line x1="65"  y1="64" x2="65"  y2="82" stroke="#00f0ff" stroke-width="1" opacity="0.5"/>
+  <line x1="100" y1="64" x2="100" y2="82" stroke="#00f0ff" stroke-width="1" opacity="0.5"/>
+  <line x1="135" y1="64" x2="135" y2="82" stroke="#00f0ff" stroke-width="1" opacity="0.5"/>
+  <line x1="55"  y1="82" x2="145" y2="82" stroke="#00f0ff" stroke-width="1" opacity="0.5"/>
+
+  <!-- Fault indicator - flashing red -->
+  <rect x="38" y="90" width="14" height="14" fill="none" stroke="#ff4d6d" stroke-width="1.5"/>
+  <rect x="41" y="93" width="8"  height="8"  fill="#ff4d6d" opacity="0.85"/>
+  <text x="58" y="100" fill="#ff4d6d" font-family="Courier New" font-size="7" letter-spacing="1">FAULT ACTIVE</text>
+
+  <!-- Label -->
+  <text x="100" y="130" fill="#4ec9d6" font-family="Courier New" font-size="9" text-anchor="middle" letter-spacing="3">RELAY CABINET</text>
+</svg>

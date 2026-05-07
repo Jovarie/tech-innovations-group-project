@@ -15,19 +15,21 @@
             <canvas id="frame"></canvas>
             <canvas id="overlay"></canvas>
 
+            <!-- Top HUD bar -->
             <div id="scanner-bar">
                 <div class="left">
+                    <button class="scanner-back-btn" onclick="history.back()">&#8592; Back</button>
                     <span class="pulse"></span>
                     <span>AR Maint // Live</span>
-                    <span id="status-text">SCANNING…</span>
+                    <span id="status-text">SCANNING</span>
                 </div>
                 <div class="right">
-                    <a href="/">Home</a>
                     <a href="/dashboard.html">Dashboard</a>
                     <span data-user-widget></span>
                 </div>
             </div>
 
+            <!-- Scanning reticle, shown while no QR is locked -->
             <div id="reticle">
                 <div class="corner tl"></div>
                 <div class="corner tr"></div>
@@ -36,36 +38,45 @@
             </div>
             <div id="hint">ALIGN QR MARKER WITHIN FRAME</div>
 
-            <div id="label" aria-hidden="true">
-                <div class="label-card">
-                    <span class="corner-tag tl"></span>
-                    <span class="corner-tag tr"></span>
-                    <span class="corner-tag bl"></span>
-                    <span class="corner-tag br"></span>
-                    <div class="label-tag" id="label-tag">FAULT DETECTED</div>
-                    <div class="label-title" id="label-title">-</div>
-                    <div class="label-direction" id="label-direction">-</div>
-                    <div class="label-desc" id="label-desc">-</div>
-                    <div class="label-meta">
-                        <span id="label-priority">-</span>
-                        <span id="label-zone">-</span>
+            <!-- Fault detail panel, slides up once a QR is identified -->
+            <div id="detail-panel" class="detail-panel hidden">
+                <div class="dp-header">
+                    <div class="dp-id-row">
+                        <span class="dp-id" id="dp-id">-</span>
+                        <span class="dp-status-badge" id="dp-status-badge">OPEN</span>
+                        <span class="dp-priority-badge" id="dp-priority-badge">HIGH</span>
                     </div>
-                    <div class="label-actions hidden" id="label-actions">
-                        <button class="btn label-fix-btn" id="fix-btn">
-                            &#9655;&nbsp; Mark as Fixed
-                        </button>
+                    <button class="dp-dismiss-btn" id="dp-dismiss-btn" title="Dismiss">&#10005;</button>
+                </div>
+
+                <div class="dp-body">
+                    <!-- Reference image -->
+                    <div class="dp-image-col">
+                        <img class="dp-image" id="dp-image" src="" alt="Component reference" />
+                        <div class="dp-image-label">COMPONENT REFERENCE</div>
                     </div>
+
+                    <!-- Fault details -->
+                    <div class="dp-info-col">
+                        <div class="dp-title" id="dp-title">-</div>
+                        <div class="dp-location" id="dp-location">-</div>
+                        <div class="dp-desc" id="dp-desc">-</div>
+                        <div class="dp-component" id="dp-component">-</div>
+                    </div>
+                </div>
+
+                <div class="dp-footer">
+                    <button class="btn dp-fix-btn" id="dp-fix-btn">
+                        &#9655;&nbsp; Mark as Fixed
+                    </button>
                 </div>
             </div>
 
-            <!-- Confirmation modal for marking a fault as fixed -->
+            <!-- Confirmation modal -->
             <div class="fix-modal hidden" id="fix-modal">
                 <div class="fix-modal-card">
                     <div class="fix-modal-title" id="fix-modal-title">Confirm Fix</div>
-                    <div class="fix-modal-body" id="fix-modal-body">
-                        Mark this fault as resolved?<br />
-                        This will update the Operations Dashboard in real-time.
-                    </div>
+                    <div class="fix-modal-body" id="fix-modal-body">Mark this fault as resolved?</div>
                     <div class="fix-modal-actions">
                         <button class="btn" id="fix-confirm-btn">&#10003;&nbsp; Confirm</button>
                         <button class="btn secondary" id="fix-cancel-btn">Cancel</button>
@@ -74,11 +85,12 @@
                 </div>
             </div>
 
+            <!-- Initial camera permission gate -->
             <div id="gate">
                 <h1>AR Scanner Ready</h1>
                 <p>
                     Grant camera access to begin scanning fault markers.<br />
-                    Try printing one of the QR payloads below:
+                    Try scanning one of the QR codes below:<br />
                     <strong>FAULT-101</strong>, <strong>FAULT-102</strong>,
                     <strong>FAULT-103</strong>.
                 </p>
@@ -87,7 +99,6 @@
             </div>
         </div>
 
-        <!-- jsQR for QR detection -->
         <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
         <script src="/js/auth.js"></script>
         <script src="/js/scanner.js"></script>

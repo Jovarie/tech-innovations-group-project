@@ -10,6 +10,8 @@ const FAULTS = {
     status: "OPEN",
     description:
       "Signalling anomaly detected on Track 1. Aspect controller failing intermittently. Inspect relay cabinet on the right-hand side of the platform.",
+    component: "Relay cabinet — look for the metal enclosure with wiring terminals. Check for the red fault indicator light on the lower-left panel.",
+    imageHint: "/images/fault-signal.svg",
     reportedAt: "2026-04-22T08:14:00Z",
   },
   "FAULT-102": {
@@ -22,6 +24,8 @@ const FAULTS = {
     status: "IN PROGRESS",
     description:
       "Insulation wear on traction power feeder cable. Visible cracking along 5m section to the left of the inspection door.",
+    component: "Traction feeder cable — look for the black rubber-jacketed cable running along the wall. Cracking and discolouration will be visible on the outer insulation.",
+    imageHint: "/images/fault-cable.svg",
     reportedAt: "2026-04-23T11:02:00Z",
   },
   "FAULT-103": {
@@ -34,6 +38,8 @@ const FAULTS = {
     status: "OPEN",
     description:
       "Hairline cracking along the tunnel lining 15m straight ahead. Water ingress observed. Schedule structural survey before next service window.",
+    component: "Tunnel lining — look for hairline cracks running vertically through the concrete segments. Water streaking or damp patches indicate active ingress.",
+    imageHint: "/images/fault-structural.svg",
     reportedAt: "2026-04-24T06:48:00Z",
   },
 };

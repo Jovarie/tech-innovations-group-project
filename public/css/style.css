@@ -1137,3 +1137,203 @@ tr.row-fixed td { opacity: 0.5; }
     color: var(--hud-color-dim);
 }
 .fix-modal-status.hidden { display: none; }
+
+/* ═══════════════════════════════════════════════════════════
+   SCANNER - BACK BUTTON
+═══════════════════════════════════════════════════════════ */
+
+.scanner-back-btn {
+    background: none;
+    border: 1px solid rgba(0,240,255,0.35);
+    color: var(--hud-color-dim);
+    font-family: inherit;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+}
+.scanner-back-btn:hover {
+    color: var(--hud-color);
+    border-color: var(--hud-color);
+    text-shadow: var(--hud-glow);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SCANNER - FAULT DETAIL PANEL
+═══════════════════════════════════════════════════════════ */
+
+.detail-panel {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 15;
+    background: linear-gradient(to top, rgba(2,8,13,0.97) 0%, rgba(2,8,13,0.92) 100%);
+    border-top: 1px solid rgba(0,240,255,0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transform: translateY(0);
+    transition: transform 0.25s ease;
+    max-height: 62vh;
+    overflow-y: auto;
+}
+.detail-panel.hidden {
+    display: none;
+}
+
+/* Header row */
+.dp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px 10px;
+    border-bottom: 1px solid rgba(0,240,255,0.15);
+    gap: 10px;
+}
+.dp-id-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.dp-id {
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: var(--hud-color);
+    text-shadow: var(--hud-glow);
+    font-weight: bold;
+}
+.dp-status-badge,
+.dp-priority-badge {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border: 1px solid;
+}
+.dp-dismiss-btn {
+    background: none;
+    border: 1px solid rgba(0,240,255,0.3);
+    color: var(--hud-color-dim);
+    font-family: inherit;
+    font-size: 13px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: color 0.15s, border-color 0.15s;
+}
+.dp-dismiss-btn:hover {
+    color: var(--crit);
+    border-color: var(--crit);
+}
+
+/* Body — image + info side by side */
+.dp-body {
+    display: flex;
+    gap: 0;
+    padding: 0;
+}
+
+.dp-image-col {
+    flex-shrink: 0;
+    width: 160px;
+    padding: 12px 12px 8px;
+    border-right: 1px solid rgba(0,240,255,0.12);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+.dp-image {
+    width: 100%;
+    height: 110px;
+    object-fit: contain;
+    border: 1px solid rgba(0,240,255,0.2);
+    background: rgba(0,12,18,0.8);
+    display: block;
+}
+.dp-image-label {
+    font-size: 7px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(0,240,255,0.4);
+    text-align: center;
+}
+
+.dp-info-col {
+    flex: 1;
+    padding: 12px 14px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.dp-title {
+    font-size: 15px;
+    color: #eafcff;
+    letter-spacing: 1px;
+    font-weight: bold;
+}
+.dp-location {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--hud-color);
+    text-transform: uppercase;
+}
+.dp-desc {
+    font-size: 11px;
+    color: #b9d8df;
+    line-height: 1.55;
+    letter-spacing: 0.3px;
+}
+.dp-component {
+    font-size: 10px;
+    color: var(--hud-color-dim);
+    line-height: 1.5;
+    border-left: 2px solid rgba(0,240,255,0.3);
+    padding-left: 8px;
+    letter-spacing: 0.3px;
+    font-style: italic;
+}
+
+/* Footer */
+.dp-footer {
+    padding: 10px 14px 14px;
+    border-top: 1px solid rgba(0,240,255,0.12);
+}
+.dp-fix-btn {
+    width: 100%;
+    padding: 10px;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--ok);
+    border-color: var(--ok);
+    box-shadow: 0 0 8px rgba(93,255,176,0.3);
+}
+.dp-fix-btn:hover {
+    background: var(--ok);
+    color: #001a0d;
+}
+
+/* Narrow screens: stack image above text */
+@media (max-width: 480px) {
+    .dp-body { flex-direction: column; }
+    .dp-image-col {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid rgba(0,240,255,0.12);
+        flex-direction: row;
+        align-items: center;
+        padding: 10px 14px;
+    }
+    .dp-image {
+        width: 100px;
+        height: 70px;
+    }
+}

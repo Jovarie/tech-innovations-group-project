@@ -1,12 +1,12 @@
-// Scanner page logic.
-// 1. Open the rear camera.
-// 2. Decode QR codes from each frame using jsQR.
-// 3. Look up the QR payload via the protected /api/faults/:id endpoint.
-// 4. Float a label above the marker. Non-fixed faults show a "Mark as Fixed" button.
-// INT-01: Confirming a fix sends PATCH /api/faults/:id/status to update the Dashboard in real-time.
+// Scanner logic.
+// QR codes are fixed physical markers. Once a code is detected and the fault
+// looked up, the detail panel locks on and stays visible until the engineer
+// explicitly dismisses it — no need to keep the camera aimed at the marker.
+// INT-01: "Mark as Fixed" fires PATCH /api/faults/:id/status to update the
+// dashboard in real-time.
 
 if (!Auth.requireAuth()) {
-  // requireAuth redirects, nothing more to do.
+  // requireAuth redirects; nothing more to do.
 } else {
   initScanner();
 }
@@ -18,24 +18,6 @@ function initScanner() {
   const overlayCtx  = overlay.getContext("2d");
   const frameCtx    = frameCanvas.getContext("2d", { willReadFrequently: true });
 
-  const labelEl    = document.getElementById("label");
-  const titleEl    = document.getElementById("label-title");
-  const dirEl      = document.getElementById("label-direction");
-  const descEl     = document.getElementById("label-desc");
-  const priorityEl = document.getElementById("label-priority");
-  const zoneEl     = document.getElementById("label-zone");
-  const tagEl      = document.getElementById("label-tag");
-
-  const labelActions = document.getElementById("label-actions");
-  const fixBtn       = document.getElementById("fix-btn");
-
-  const fixModal        = document.getElementById("fix-modal");
-  const fixModalTitle   = document.getElementById("fix-modal-title");
-  const fixModalBody    = document.getElementById("fix-modal-body");
-  const fixConfirmBtn   = document.getElementById("fix-confirm-btn");
-  const fixCancelBtn    = document.getElementById("fix-cancel-btn");
-  const fixModalStatus  = document.getElementById("fix-modal-status");
-
   const reticle    = document.getElementById("reticle");
   const hint       = document.getElementById("hint");
   const statusText = document.getElementById("status-text");
@@ -43,16 +25,39 @@ function initScanner() {
   const startBtn   = document.getElementById("start-btn");
   const gateError  = document.getElementById("gate-error");
 
-  // Cache fault lookups so we don't overload the backend every frame.
-  const faultCache = new Map(); // id -> { fault | null }
-  const inflight   = new Map(); // id -> Promise
+  // Detail panel elements
+  const panel         = document.getElementById("detail-panel");
+  const dpId          = document.getElementById("dp-id");
+  const dpStatusBadge = document.getElementById("dp-status-badge");
+  const dpPriority    = document.getElementById("dp-priority-badge");
+  const dpTitle       = document.getElementById("dp-title");
+  const dpLocation    = document.getElementById("dp-location");
+  const dpDesc        = document.getElementById("dp-desc");
+  const dpComponent   = document.getElementById("dp-component");
+  const dpImage       = document.getElementById("dp-image");
+  const dpDismissBtn  = document.getElementById("dp-dismiss-btn");
+  const dpFixBtn      = document.getElementById("dp-fix-btn");
 
-  let lastSeen    = 0;
-  let activeId    = null;
-  let pendingFixId = null;
-  const HOLD_MS   = 350;
+  // Fix modal elements
+  const fixModal       = document.getElementById("fix-modal");
+  const fixModalTitle  = document.getElementById("fix-modal-title");
+  const fixModalBody   = document.getElementById("fix-modal-body");
+  const fixConfirmBtn  = document.getElementById("fix-confirm-btn");
+  const fixCancelBtn   = document.getElementById("fix-cancel-btn");
+  const fixModalStatus = document.getElementById("fix-modal-status");
 
-  // ─── Fix modal wiring ────────────────────────────────────────────────────
+  // Fault lookup cache
+  const faultCache = new Map();
+  const inflight   = new Map();
+
+  // Once a fault is identified the panel locks — the QR does not need to
+  // stay in frame. panelLocked prevents hidePanel() from firing mid-scan.
+  let panelLocked   = false;
+  let pendingFixId  = null;
+  let lastSeen      = 0;
+  const HOLD_MS     = 400;
+
+  // ── Fix modal ──────────────────────────────────────────────────────────────
 
   fixCancelBtn.addEventListener("click", closeFixModal);
 
@@ -60,12 +65,11 @@ function initScanner() {
     if (!pendingFixId) return;
     fixConfirmBtn.disabled = true;
     fixCancelBtn.disabled  = true;
-    fixConfirmBtn.textContent = "Sending…";
+    fixConfirmBtn.textContent = "Sending...";
     fixModalStatus.classList.remove("hidden");
-    fixModalStatus.textContent = "Contacting server…";
+    fixModalStatus.textContent = "Contacting server...";
 
     try {
-      // INT-01: Send API call to mark fault as fixed and update dashboard in real-time
       const res = await Auth.fetch(
         `/api/faults/${encodeURIComponent(pendingFixId)}/status`,
         { method: "PATCH", body: JSON.stringify({ status: "FIXED" }) },
@@ -75,27 +79,28 @@ function initScanner() {
         throw new Error(body.error || `Server error ${res.status}`);
       }
       const updated = await res.json();
-
-      // Bust the local cache so the label reflects the new status on next scan
       faultCache.set(pendingFixId, updated);
 
-      fixModalStatus.textContent = "✓ Dashboard updated in real-time.";
+      // Reflect the change immediately in the open panel
+      showPanel(updated);
+
+      fixModalStatus.textContent = "Dashboard updated in real-time.";
       fixModalStatus.style.color = "var(--ok)";
       fixConfirmBtn.textContent  = "Done";
 
       setTimeout(() => {
         closeFixModal();
-        fixConfirmBtn.disabled = false;
-        fixCancelBtn.disabled  = false;
-        fixConfirmBtn.textContent = "✓  Confirm";
+        fixConfirmBtn.disabled    = false;
+        fixCancelBtn.disabled     = false;
+        fixConfirmBtn.textContent = "Confirm";
         fixModalStatus.style.color = "";
       }, 1800);
     } catch (err) {
       fixModalStatus.textContent = "Error: " + (err.message || "Unknown error");
       fixModalStatus.style.color = "var(--crit)";
-      fixConfirmBtn.disabled = false;
-      fixCancelBtn.disabled  = false;
-      fixConfirmBtn.textContent = "✓  Confirm";
+      fixConfirmBtn.disabled     = false;
+      fixCancelBtn.disabled      = false;
+      fixConfirmBtn.textContent  = "Confirm";
     }
   });
 
@@ -114,7 +119,58 @@ function initScanner() {
     pendingFixId = null;
   }
 
-  // ─── Overlay resize ──────────────────────────────────────────────────────
+  // ── Detail panel ───────────────────────────────────────────────────────────
+
+  function showPanel(fault) {
+    const isFixed = fault.status === "FIXED";
+
+    dpId.textContent = fault.id;
+
+    dpStatusBadge.textContent  = fault.status;
+    dpStatusBadge.className    = "dp-status-badge badge " + fault.status.toLowerCase().replace(/\s+/g, "-");
+
+    dpPriority.textContent  = fault.priority;
+    dpPriority.className    = "dp-priority-badge badge " + fault.priority.toLowerCase();
+
+    dpTitle.textContent    = fault.title;
+    dpLocation.textContent = `${fault.distance} ${fault.direction.toUpperCase()} // ${fault.zone}`;
+    dpDesc.textContent     = fault.description;
+    dpComponent.textContent = fault.component || "";
+
+    if (fault.imageHint) {
+      dpImage.src = fault.imageHint;
+      dpImage.parentElement.style.display = "";
+    } else {
+      dpImage.parentElement.style.display = "none";
+    }
+
+    if (isFixed) {
+      dpFixBtn.style.display = "none";
+    } else {
+      dpFixBtn.style.display = "";
+      dpFixBtn.onclick = () => openFixModal(fault);
+    }
+
+    panel.classList.remove("hidden");
+    panelLocked = true;
+
+    reticle.classList.add("hidden");
+    hint.classList.add("hidden");
+    statusText.textContent = isFixed ? "FAULT CLOSED" : "MARKER LOCKED";
+  }
+
+  function hidePanel() {
+    panel.classList.add("hidden");
+    panelLocked = false;
+    reticle.classList.remove("hidden");
+    hint.classList.remove("hidden");
+    statusText.textContent = "SCANNING";
+    overlayCtx.clearRect(0, 0, overlay.clientWidth, overlay.clientHeight);
+  }
+
+  dpDismissBtn.addEventListener("click", hidePanel);
+
+  // ── Overlay ────────────────────────────────────────────────────────────────
 
   function resizeOverlay() {
     overlay.width  = overlay.clientWidth  * window.devicePixelRatio;
@@ -123,7 +179,7 @@ function initScanner() {
   }
   window.addEventListener("resize", resizeOverlay);
 
-  // ─── Camera startup ──────────────────────────────────────────────────────
+  // ── Camera ─────────────────────────────────────────────────────────────────
 
   async function startCamera() {
     gateError.textContent = "";
@@ -138,26 +194,22 @@ function initScanner() {
       resizeOverlay();
       requestAnimationFrame(tick);
     } catch (err) {
-      console.error(err);
-      gateError.textContent =
-        "Camera unavailable: " + (err && err.message ? err.message : err);
+      gateError.textContent = "Camera unavailable: " + (err.message || err);
     }
   }
   startBtn.addEventListener("click", startCamera);
 
-  // ─── Coordinate helpers ──────────────────────────────────────────────────
+  // ── Helpers ────────────────────────────────────────────────────────────────
 
   function videoToScreen(pt) {
     const vw = video.videoWidth,  vh = video.videoHeight;
     const cw = video.clientWidth, ch = video.clientHeight;
     if (!vw || !vh) return { x: 0, y: 0 };
-    const scale  = Math.max(cw / vw, ch / vh);
-    const dispW  = vw * scale, dispH = vh * scale;
-    const offX   = (cw - dispW) / 2, offY = (ch - dispH) / 2;
+    const scale = Math.max(cw / vw, ch / vh);
+    const offX  = (cw - vw * scale) / 2;
+    const offY  = (ch - vh * scale) / 2;
     return { x: pt.x * scale + offX, y: pt.y * scale + offY };
   }
-
-  // ─── Canvas drawing ──────────────────────────────────────────────────────
 
   function drawMarker(corners, recognised) {
     const colour = recognised ? "#00f0ff" : "#ffcc00";
@@ -179,70 +231,6 @@ function initScanner() {
     });
   }
 
-  function clearOverlay() {
-    overlayCtx.clearRect(0, 0, overlay.clientWidth, overlay.clientHeight);
-  }
-
-  // ─── Label rendering ─────────────────────────────────────────────────────
-
-  function showLabelAt(screenCorners, fault) {
-    let minX = Infinity, minY = Infinity, maxX = -Infinity;
-    screenCorners.forEach((c) => {
-      if (c.x < minX) minX = c.x;
-      if (c.x > maxX) maxX = c.x;
-      if (c.y < minY) minY = c.y;
-    });
-    const anchorX = (minX + maxX) / 2;
-    const anchorY = minY;
-
-    if (fault) {
-      const isFixed = fault.status === "FIXED";
-      tagEl.textContent    = isFixed ? `${fault.id} // CLOSED` : `${fault.id} // FAULT DETECTED`;
-      tagEl.className      = isFixed ? "label-tag label-tag-fixed" : "label-tag";
-      titleEl.textContent  = fault.title;
-      dirEl.textContent    = `${fault.distance} ${fault.direction.toUpperCase()}`;
-      descEl.textContent   = fault.description;
-      priorityEl.textContent = `Priority: ${fault.priority}`;
-      zoneEl.textContent   = fault.zone;
-
-      if (isFixed) {
-        labelActions.classList.add("hidden");
-      } else {
-        labelActions.classList.remove("hidden");
-        fixBtn.onclick = () => openFixModal(fault);
-      }
-    } else {
-      tagEl.textContent  = "UNKNOWN MARKER";
-      tagEl.className    = "label-tag";
-      titleEl.textContent = "Unrecognised QR Code";
-      dirEl.textContent  = "-";
-      descEl.textContent = "No matching fault record. Verify marker integrity.";
-      priorityEl.textContent = "";
-      zoneEl.textContent = "";
-      labelActions.classList.add("hidden");
-    }
-
-    labelEl.style.transform = `translate(${anchorX}px, ${anchorY}px) translate(-50%, -100%)`;
-    labelEl.classList.add("visible");
-    reticle.classList.add("hidden");
-    hint.classList.add("hidden");
-
-    const fixedText = fault && fault.status === "FIXED" ? "FAULT CLOSED" : "MARKER LOCKED";
-    statusText.textContent = fault ? fixedText : "UNKNOWN MARKER";
-  }
-
-  function hideLabel() {
-    labelEl.classList.remove("visible");
-    labelActions.classList.add("hidden");
-    reticle.classList.remove("hidden");
-    hint.classList.remove("hidden");
-    statusText.textContent = "SCANNING…";
-    activeId = null;
-    clearOverlay();
-  }
-
-  // ─── Fault lookup ────────────────────────────────────────────────────────
-
   async function lookupFault(id) {
     if (faultCache.has(id)) return faultCache.get(id);
     if (inflight.has(id))   return inflight.get(id);
@@ -256,7 +244,6 @@ function initScanner() {
         faultCache.set(id, fault);
         return fault;
       } catch (e) {
-        console.error(e);
         return null;
       } finally {
         inflight.delete(id);
@@ -267,7 +254,7 @@ function initScanner() {
     return p;
   }
 
-  // ─── Main render loop ────────────────────────────────────────────────────
+  // ── Main render loop ───────────────────────────────────────────────────────
 
   function tick() {
     if (video.readyState === video.HAVE_ENOUGH_DATA) {
@@ -280,31 +267,42 @@ function initScanner() {
       const imageData = frameCtx.getImageData(0, 0, w, h);
       const code = jsQR(imageData.data, w, h, { inversionAttempts: "dontInvert" });
 
-      if (code && code.location) {
+      if (code && code.location && !panelLocked) {
         lastSeen = performance.now();
         const id  = (code.data || "").trim();
         const loc = code.location;
-        const screenCorners = [
+        const corners = [
           loc.topLeftCorner, loc.topRightCorner,
           loc.bottomRightCorner, loc.bottomLeftCorner,
         ].map(videoToScreen);
 
-        let fault = faultCache.has(id) ? faultCache.get(id) : undefined;
-        if (fault === undefined) {
-          drawMarker(screenCorners, false);
-          showLabelAt(screenCorners, null);
-          tagEl.textContent  = `${id} // VERIFYING…`;
-          titleEl.textContent = "Looking up fault record";
-          descEl.textContent  = "Querying secure backend for marker details.";
-          lookupFault(id);
-          activeId = id;
+        const cached = faultCache.has(id) ? faultCache.get(id) : undefined;
+
+        if (cached === undefined) {
+          // Not yet in cache — show scanning feedback and kick off lookup
+          statusText.textContent = "VERIFYING...";
+          drawMarker(corners, false);
+          lookupFault(id).then((fault) => {
+            if (fault !== undefined) showPanel(fault);
+          });
         } else {
-          activeId = id;
-          drawMarker(screenCorners, !!fault);
-          showLabelAt(screenCorners, fault);
+          // Already cached (including null for unknown IDs) — lock on immediately
+          drawMarker(corners, !!cached);
+          showPanel(cached || {
+            id,
+            title: "Unrecognised Marker",
+            zone: "-",
+            distance: "-",
+            direction: "",
+            priority: "LOW",
+            status: "OPEN",
+            description: "No matching fault record. Check marker integrity.",
+            component: "",
+            imageHint: null,
+          });
         }
-      } else if (performance.now() - lastSeen > HOLD_MS) {
-        hideLabel();
+      } else if (!panelLocked && performance.now() - lastSeen > HOLD_MS) {
+        overlayCtx.clearRect(0, 0, overlay.clientWidth, overlay.clientHeight);
       }
     }
     requestAnimationFrame(tick);
