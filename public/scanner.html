@@ -88,13 +88,11 @@
             <!-- Initial camera permission gate -->
             <div id="gate">
                 <h1>AR Scanner Ready</h1>
-                <p>
-                    Grant camera access to begin scanning fault markers.<br />
-                    Try scanning one of the QR codes below:<br />
-                    <strong>FAULT-101</strong>, <strong>FAULT-102</strong>,
-                    <strong>FAULT-103</strong>.
-                </p>
-                <button class="btn" id="start-btn">Start Camera</button>
+                <p>Grant camera access to begin scanning fault markers.</p>
+                <div class="gate-actions">
+                    <button class="btn secondary" onclick="history.back()">&#8592; Back</button>
+                    <button class="btn" id="start-btn">Start Camera</button>
+                </div>
                 <small id="gate-error"></small>
             </div>
         </div>

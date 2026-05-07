@@ -1,6 +1,6 @@
 // src/routes/faultRoutes.js
 const express = require("express");
-const { FAULTS, updateFaultStatus, ALLOWED_STATUSES } = require("../models/fault");
+const { FAULTS, updateFaultStatus, resetFaults, ALLOWED_STATUSES } = require("../models/fault");
 const { ZONES, RESTRICTED_PERMISSION } = require("../models/zones");
 const { authRequired } = require("../middleware/auth");
 const rbacMiddleware = require("../middleware/rbacMiddleware");
@@ -43,6 +43,16 @@ router.patch(
     const fault = updateFaultStatus(req.params.id, status);
     if (fault === null) return res.status(404).json({ error: "Fault not found" });
     res.json(fault);
+  },
+);
+
+// POST /api/faults/reset  — restore all faults to seed statuses (demo utility)
+router.post(
+  "/faults/reset",
+  authRequired,
+  rbacMiddleware.checkPermission("execute_ar"),
+  (req, res) => {
+    res.json({ faults: Object.values(resetFaults()) });
   },
 );
 
