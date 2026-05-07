@@ -21,11 +21,21 @@
         </header>
 
         <main class="dash">
-            <h2>Fault Status Overview</h2>
-            <div class="sub">
-                Live snapshot of reported faults across the network
+
+            <!-- Header row with live indicator -->
+            <div class="dash-title-row">
+                <div>
+                    <h2>Fault Status Overview</h2>
+                    <div class="sub">Live snapshot of reported faults across the network</div>
+                </div>
+                <div class="dash-live-indicator">
+                    <span class="pulse pulse-ok"></span>
+                    <span class="live-label">LIVE</span>
+                    <span class="last-updated" id="last-updated">—</span>
+                </div>
             </div>
 
+            <!-- Metric cards -->
             <div class="metric-row" id="metrics">
                 <div class="metric">
                     <div class="lbl">Total Faults</div>
@@ -41,10 +51,15 @@
                 </div>
                 <div class="metric">
                     <div class="lbl">Critical</div>
-                    <div class="val" id="m-critical">—</div>
+                    <div class="val metric-crit" id="m-critical">—</div>
+                </div>
+                <div class="metric">
+                    <div class="lbl">Fixed</div>
+                    <div class="val metric-ok" id="m-fixed">—</div>
                 </div>
             </div>
 
+            <!-- Fault table -->
             <div class="table-wrap">
                 <table class="faults" id="faults-table">
                     <thead>
@@ -60,13 +75,26 @@
                     </thead>
                     <tbody id="faults-body">
                         <tr>
-                            <td colspan="7" class="empty-state">
-                                Loading fault registry…
-                            </td>
+                            <td colspan="7" class="empty-state">Loading fault registry…</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
+
+            <!-- CYB-03: Restricted Operational Zones panel -->
+            <div class="zone-panel" id="zone-panel">
+                <div class="zone-panel-header">
+                    <div class="zone-panel-title">
+                        <span id="zone-lock-icon">&#128274;</span>
+                        &nbsp;Operational Zone Access
+                    </div>
+                    <div class="zone-clearance-badge" id="zone-clearance-badge">CHECKING…</div>
+                </div>
+                <div class="zone-panel-body" id="zone-panel-body">
+                    <div class="empty-state">Loading zone data…</div>
+                </div>
+            </div>
+
         </main>
 
         <script src="/js/auth.js"></script>
