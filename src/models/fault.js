@@ -38,4 +38,13 @@ const FAULTS = {
   },
 };
 
-module.exports = { FAULTS };
+const ALLOWED_STATUSES = ["OPEN", "IN PROGRESS", "FIXED"];
+
+function updateFaultStatus(id, status) {
+  if (!FAULTS[id]) return null;
+  if (!ALLOWED_STATUSES.includes(status)) return undefined;
+  FAULTS[id] = { ...FAULTS[id], status, updatedAt: new Date().toISOString() };
+  return FAULTS[id];
+}
+
+module.exports = { FAULTS, updateFaultStatus, ALLOWED_STATUSES };

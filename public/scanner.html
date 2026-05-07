@@ -50,6 +50,27 @@
                         <span id="label-priority">—</span>
                         <span id="label-zone">—</span>
                     </div>
+                    <div class="label-actions hidden" id="label-actions">
+                        <button class="btn label-fix-btn" id="fix-btn">
+                            &#9655;&nbsp; Mark as Fixed
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Confirmation modal for marking a fault as fixed -->
+            <div class="fix-modal hidden" id="fix-modal">
+                <div class="fix-modal-card">
+                    <div class="fix-modal-title" id="fix-modal-title">Confirm Fix</div>
+                    <div class="fix-modal-body" id="fix-modal-body">
+                        Mark this fault as resolved?<br />
+                        This will update the Operations Dashboard in real-time.
+                    </div>
+                    <div class="fix-modal-actions">
+                        <button class="btn" id="fix-confirm-btn">&#10003;&nbsp; Confirm</button>
+                        <button class="btn secondary" id="fix-cancel-btn">Cancel</button>
+                    </div>
+                    <div class="fix-modal-status hidden" id="fix-modal-status"></div>
                 </div>
             </div>
 

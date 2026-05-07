@@ -24,29 +24,102 @@
         </header>
 
         <main class="welcome">
-            <h1>AR Maintenance Support</h1>
-            <div class="tagline">Public Transport // TRL 3 Prototype</div>
 
+            <!-- Hero title block -->
+            <div class="hero-eyebrow">TRL&nbsp;3 PROTOTYPE &nbsp;·&nbsp; TECH INNOVATIONS GROUP&nbsp;2</div>
+            <h1>AR Maintenance<br><span class="hero-accent">Support System</span></h1>
             <p class="lead">
-                Authorised engineers can scan QR markers placed on platforms,
-                tunnels, vehicles and service corridors to surface fault
-                locations, distances and descriptions overlaid on the live
-                camera feed.
+                Augmented reality fault detection for public transport infrastructure.
+                Engineers scan physical QR markers to surface live fault data, zone
+                hazard information, and guided repair workflows — all secured by
+                JWT authentication and role-based access control.
             </p>
 
-            <div class="actions">
-                <a class="btn" href="/scanner.html">Open AR Scanner</a>
-                <a class="btn secondary" href="/dashboard.html"
-                    >View Dashboard</a
-                >
+            <!-- System architecture diagram -->
+            <div class="arch-diagram" aria-label="System architecture">
+                <div class="arch-node arch-ar">
+                    <div class="arch-node-icon">&#9635;</div>
+                    <div class="arch-node-name">AR SCANNER</div>
+                    <div class="arch-node-detail">QR Detect · Live Overlay · Mark Fixed</div>
+                </div>
+                <div class="arch-arrow">
+                    <div class="arch-arrow-line"></div>
+                    <div class="arch-arrow-label">JWT Bearer</div>
+                </div>
+                <div class="arch-node arch-sec">
+                    <div class="arch-node-icon">&#9670;</div>
+                    <div class="arch-node-name">SECURITY GATEWAY</div>
+                    <div class="arch-node-detail">RBAC · Role Verify · Zone Control</div>
+                </div>
+                <div class="arch-arrow">
+                    <div class="arch-arrow-line"></div>
+                    <div class="arch-arrow-label">Live API</div>
+                </div>
+                <div class="arch-node arch-dash">
+                    <div class="arch-node-icon">&#9632;</div>
+                    <div class="arch-node-name">DASHBOARD</div>
+                    <div class="arch-node-detail">Live Faults · Metrics · Zone Intel</div>
+                </div>
             </div>
 
-            <div class="meta">
-                Build 1.0.0 &nbsp;•&nbsp; Encrypted Channel &nbsp;•&nbsp;
-                Internal Use Only
+            <!-- Feature pills -->
+            <div class="feature-strip">
+                <div class="feature-pill">
+                    <span class="fp-dot fp-cyan"></span>JWT Auth
+                </div>
+                <div class="feature-pill">
+                    <span class="fp-dot fp-cyan"></span>RBAC Roles
+                </div>
+                <div class="feature-pill">
+                    <span class="fp-dot fp-warn"></span>Restricted Zones
+                </div>
+                <div class="feature-pill">
+                    <span class="fp-dot fp-ok"></span>Real-time Updates
+                </div>
+                <div class="feature-pill">
+                    <span class="fp-dot fp-cyan"></span>QR Detection
+                </div>
             </div>
+
+            <!-- CTA buttons -->
+            <div class="actions">
+                <a class="btn" href="/scanner.html">&#9655;&nbsp; Open AR Scanner</a>
+                <a class="btn secondary" href="/dashboard.html">View Dashboard</a>
+                <a class="btn secondary" href="/login.html" id="login-cta">Engineer Login</a>
+            </div>
+
+            <!-- System status strip -->
+            <div class="status-strip">
+                <div class="status-item">
+                    <span class="pulse pulse-ok" style="width:7px;height:7px;"></span>
+                    <span>Server Online</span>
+                </div>
+                <div class="status-sep">·</div>
+                <div class="status-item">
+                    <span class="pulse" style="width:7px;height:7px;"></span>
+                    <span>Encrypted Channel</span>
+                </div>
+                <div class="status-sep">·</div>
+                <div class="status-item">
+                    <span>Build 2.0.0</span>
+                </div>
+                <div class="status-sep">·</div>
+                <div class="status-item">
+                    <span>Internal Use Only</span>
+                </div>
+            </div>
+
         </main>
 
         <script src="/js/auth.js"></script>
+        <script>
+            // Hide login CTA if already authenticated
+            document.addEventListener("DOMContentLoaded", () => {
+                if (Auth.isLoggedIn()) {
+                    const el = document.getElementById("login-cta");
+                    if (el) el.style.display = "none";
+                }
+            });
+        </script>
     </body>
 </html>
