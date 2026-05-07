@@ -15,6 +15,10 @@
     box-sizing: border-box;
 }
 
+.hidden {
+    display: none !important;
+}
+
 html,
 body {
     margin: 0;
@@ -1323,9 +1327,12 @@ tr.row-fixed td { opacity: 0.5; }
 .dp-footer {
     padding: 10px 14px 14px;
     border-top: 1px solid rgba(0,240,255,0.12);
+    display: flex;
+    gap: 8px;
+    align-items: center;
 }
 .dp-fix-btn {
-    width: 100%;
+    flex: 1;
     padding: 10px;
     font-size: 11px;
     letter-spacing: 3px;
