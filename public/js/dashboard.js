@@ -1,11 +1,29 @@
 // Dashboard logic: fetches fault registry and zone access data.
 // INT-01: Polls every 5 seconds so fixes made in the AR scanner appear in real-time.
-// CYB-03: Fetches /api/zones — restricted zone details visible only to authorised roles.
+// CYB-03: Fetches /api/zones - restricted zone details visible only to authorised roles.
 
 if (Auth.requireAuth()) {
   loadDashboard();
   loadZones();
   setInterval(loadDashboard, 5000);
+
+  const resetBtn = document.getElementById("reset-faults-btn");
+  if (resetBtn) {
+    resetBtn.addEventListener("click", async () => {
+      resetBtn.disabled = true;
+      resetBtn.textContent = "Resetting...";
+      try {
+        const res = await Auth.fetch("/api/faults/reset", { method: "POST" });
+        if (!res.ok) throw new Error("Reset failed");
+        await loadDashboard();
+      } catch (err) {
+        alert("Reset failed: " + err.message);
+      } finally {
+        resetBtn.disabled = false;
+        resetBtn.innerHTML = "&#8635; Reset Faults";
+      }
+    });
+  }
 }
 
 // ─── Fault table ─────────────────────────────────────────────────────────────
@@ -73,11 +91,11 @@ async function loadZones() {
 
     const hasRestricted = zones.some((z) => z.accessLevel === "restricted" && z.authorized);
     if (hasRestricted) {
-      badgeEl.textContent    = "FULL CLEARANCE — " + (role || "").toUpperCase();
+      badgeEl.textContent    = "FULL CLEARANCE: " + (role || "").toUpperCase();
       badgeEl.className      = "zone-clearance-badge badge-cleared";
       lockIconEl.textContent = "🔓"; // 🔓
     } else {
-      badgeEl.textContent = "STANDARD CLEARANCE — " + (role || "").toUpperCase();
+      badgeEl.textContent = "STANDARD CLEARANCE: " + (role || "").toUpperCase();
       badgeEl.className   = "zone-clearance-badge badge-standard";
     }
 

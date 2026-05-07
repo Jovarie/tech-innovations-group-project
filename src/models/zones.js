@@ -28,7 +28,7 @@ const ZONES = {
     description: "Structural monitoring zone with active sensor network.",
     hazards: "Confined space. Water ingress risk. Evacuation protocol active.",
     operationalDetail:
-      "Structural sensors SC-B1–SC-B6 active. Crack width threshold: 2mm triggers auto-alert. Evacuation assembly point: Surface Level Platform A. Do not enter within 30 min of scheduled service.",
+      "Structural sensors SC-B1 to SC-B6 active. Crack width threshold: 2mm triggers auto-alert. Evacuation assembly point: Surface Level Platform A. Do not enter within 30 min of scheduled service.",
   },
 };
 

@@ -28,10 +28,13 @@
                     <h2>Fault Status Overview</h2>
                     <div class="sub">Live snapshot of reported faults across the network</div>
                 </div>
-                <div class="dash-live-indicator">
-                    <span class="pulse pulse-ok"></span>
-                    <span class="live-label">LIVE</span>
-                    <span class="last-updated" id="last-updated">—</span>
+                <div class="dash-title-right">
+                    <button class="btn secondary btn-sm" id="reset-faults-btn" title="Reset all faults to original statuses">&#8635; Reset Faults</button>
+                    <div class="dash-live-indicator">
+                        <span class="pulse pulse-ok"></span>
+                        <span class="live-label">LIVE</span>
+                        <span class="last-updated" id="last-updated">-</span>
+                    </div>
                 </div>
             </div>
 
@@ -39,23 +42,23 @@
             <div class="metric-row" id="metrics">
                 <div class="metric">
                     <div class="lbl">Total Faults</div>
-                    <div class="val" id="m-total">—</div>
+                    <div class="val" id="m-total">-</div>
                 </div>
                 <div class="metric">
                     <div class="lbl">Open</div>
-                    <div class="val" id="m-open">—</div>
+                    <div class="val" id="m-open">-</div>
                 </div>
                 <div class="metric">
                     <div class="lbl">In Progress</div>
-                    <div class="val" id="m-progress">—</div>
+                    <div class="val" id="m-progress">-</div>
                 </div>
                 <div class="metric">
                     <div class="lbl">Critical</div>
-                    <div class="val metric-crit" id="m-critical">—</div>
+                    <div class="val metric-crit" id="m-critical">-</div>
                 </div>
                 <div class="metric">
                     <div class="lbl">Fixed</div>
-                    <div class="val metric-ok" id="m-fixed">—</div>
+                    <div class="val metric-ok" id="m-fixed">-</div>
                 </div>
             </div>
 

@@ -1,6 +1,6 @@
 // src/routes/faultRoutes.js
 const express = require("express");
-const { FAULTS, updateFaultStatus, ALLOWED_STATUSES } = require("../models/fault");
+const { FAULTS, updateFaultStatus, resetFaults, ALLOWED_STATUSES } = require("../models/fault");
 const { ZONES, RESTRICTED_PERMISSION } = require("../models/zones");
 const { authRequired } = require("../middleware/auth");
 const rbacMiddleware = require("../middleware/rbacMiddleware");
@@ -46,6 +46,16 @@ router.patch(
   },
 );
 
+// POST /api/faults/reset  — restore all faults to seed statuses (demo utility)
+router.post(
+  "/faults/reset",
+  authRequired,
+  rbacMiddleware.checkPermission("execute_ar"),
+  (req, res) => {
+    res.json({ faults: Object.values(resetFaults()) });
+  },
+);
+
 // GET /api/zones  (CYB-03: returns zone list; restricted zones show full detail only to authorised roles)
 router.get(
   "/zones",
@@ -60,7 +70,7 @@ router.get(
         name: z.name,
         accessLevel: z.accessLevel,
         authorized: canAccess,
-        description: canAccess ? z.description : "RESTRICTED — Insufficient clearance level.",
+        description: canAccess ? z.description : "RESTRICTED: Insufficient clearance level.",
         hazards: canAccess ? z.hazards : null,
         operationalDetail: canAccess ? (z.operationalDetail || null) : null,
       };
