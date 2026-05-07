@@ -1,0 +1,47 @@
+{
+  "roles": [
+    {
+      "name": "junior technician",
+      "permissions": [
+        "read_ar",
+        "execute_ar",
+        "create_record",
+        "read_record",
+        "read_infastructure_data"
+        
+      ]
+    },
+    {
+      "name": "senior engineer",
+      "permissions": [
+        "read_ar",
+        "execute_ar",
+        "create_record",
+        "edit_record",
+        "read_infastructure_data",
+        "write_infastructure_data"
+      ]
+    },
+    {
+      "name": "security admin",
+      "permissions": [
+        "read_ar",
+        "write_ar",
+        "execute_ar",
+        "create_record",
+        "create_admin",
+        "read_admin",
+        "update_admin",
+        "delete_damin"    
+      ]
+    },
+    {
+      "name": "system auditor",
+      "permissions": [
+        "read_ar",
+        "read_record",
+        "read_admin"
+      ]
+    }   
+  ]
+}
