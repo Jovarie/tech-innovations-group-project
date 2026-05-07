@@ -60,7 +60,7 @@ router.get(
         name: z.name,
         accessLevel: z.accessLevel,
         authorized: canAccess,
-        description: canAccess ? z.description : "RESTRICTED — Insufficient clearance level.",
+        description: canAccess ? z.description : "RESTRICTED: Insufficient clearance level.",
         hazards: canAccess ? z.hazards : null,
         operationalDetail: canAccess ? (z.operationalDetail || null) : null,
       };

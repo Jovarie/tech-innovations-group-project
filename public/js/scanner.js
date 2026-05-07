@@ -103,7 +103,7 @@ function initScanner() {
     pendingFixId = fault.id;
     fixModalTitle.textContent = `Close Fault: ${fault.id}`;
     fixModalBody.textContent  =
-      `"${fault.title}" — ${fault.zone}. This will be marked FIXED and the Operations Dashboard will update immediately.`;
+      `"${fault.title}" in ${fault.zone}. This will be marked FIXED and the Operations Dashboard will update immediately.`;
     fixModalStatus.classList.add("hidden");
     fixModalStatus.textContent = "";
     fixModal.classList.remove("hidden");
@@ -215,7 +215,7 @@ function initScanner() {
       tagEl.textContent  = "UNKNOWN MARKER";
       tagEl.className    = "label-tag";
       titleEl.textContent = "Unrecognised QR Code";
-      dirEl.textContent  = "—";
+      dirEl.textContent  = "-";
       descEl.textContent = "No matching fault record. Verify marker integrity.";
       priorityEl.textContent = "";
       zoneEl.textContent = "";
