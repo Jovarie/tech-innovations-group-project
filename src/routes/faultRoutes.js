@@ -1,6 +1,6 @@
 // src/routes/faultRoutes.js
 const express = require("express");
-const { FAULTS, updateFaultStatus, resetFaults, ALLOWED_STATUSES } = require("../models/fault");
+const { FAULTS, updateFaultStatus, resetFaults, addNote, ALLOWED_STATUSES } = require("../models/fault");
 const { ZONES, RESTRICTED_PERMISSION } = require("../models/zones");
 const { authRequired } = require("../middleware/auth");
 const rbacMiddleware = require("../middleware/rbacMiddleware");
@@ -46,6 +46,22 @@ router.patch(
   },
 );
 
+// POST /api/faults/:id/notes  (SWE-04: engineer adds a site annotation)
+router.post(
+  "/faults/:id/notes",
+  authRequired,
+  rbacMiddleware.checkPermission("execute_ar"),
+  (req, res) => {
+    const { text, author } = req.body || {};
+    if (!text || typeof text !== "string" || !text.trim()) {
+      return res.status(400).json({ error: "note text is required" });
+    }
+    const fault = addNote(req.params.id, text.trim(), (author || "engineer").trim());
+    if (fault === null) return res.status(404).json({ error: "Fault not found" });
+    res.json(fault);
+  },
+);
+
 // POST /api/faults/reset  — restore all faults to seed statuses (demo utility)
 router.post(
   "/faults/reset",
@@ -76,6 +92,59 @@ router.get(
       };
     });
     res.json({ zones, role: req.user.role });
+  },
+);
+
+// GET /api/analytics  — descriptive stats + rule-based priority risk predictions
+router.get(
+  "/analytics",
+  authRequired,
+  rbacMiddleware.checkPermission("read_ar"),
+  (req, res) => {
+    const faults = Object.values(FAULTS);
+    const now    = Date.now();
+
+    // Resolution time targets in days by priority (rule-based predictive model)
+    const TARGET_DAYS = { CRITICAL: 2, HIGH: 5, MEDIUM: 14, LOW: 30 };
+
+    const byStatus   = { OPEN: 0, "IN PROGRESS": 0, FIXED: 0 };
+    const byPriority = { CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0 };
+    const predictions = [];
+
+    faults.forEach((f) => {
+      if (byStatus[f.status]   !== undefined) byStatus[f.status]++;
+      if (byPriority[f.priority] !== undefined) byPriority[f.priority]++;
+
+      if (f.status !== "FIXED") {
+        const ageMs       = now - new Date(f.reportedAt).getTime();
+        const ageDays     = ageMs / 86400000;
+        const targetDays  = TARGET_DAYS[f.priority] || 14;
+        const daysLeft    = Math.max(0, targetDays - ageDays);
+        const overdue     = ageDays > targetDays;
+        const riskScore   = Math.min(100, Math.round((ageDays / targetDays) * 100));
+
+        predictions.push({
+          id:          f.id,
+          title:       f.title,
+          priority:    f.priority,
+          status:      f.status,
+          ageDays:     Math.round(ageDays * 10) / 10,
+          targetDays,
+          daysLeft:    Math.round(daysLeft * 10) / 10,
+          overdue,
+          riskScore,
+        });
+      }
+    });
+
+    predictions.sort((a, b) => b.riskScore - a.riskScore);
+
+    res.json({
+      byStatus,
+      byPriority,
+      totalNotes:   faults.reduce((n, f) => n + (f.notes ? f.notes.length : 0), 0),
+      predictions,
+    });
   },
 );
 

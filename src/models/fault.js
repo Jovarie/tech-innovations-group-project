@@ -33,4 +33,12 @@ function resetFaults() {
   return FAULTS;
 }
 
-module.exports = { FAULTS, updateFaultStatus, resetFaults, ALLOWED_STATUSES };
+function addNote(id, text, author) {
+  if (!FAULTS[id]) return null;
+  const note = { text, author, timestamp: new Date().toISOString() };
+  FAULTS[id].notes = [...(FAULTS[id].notes || []), note];
+  save(FAULTS);
+  return FAULTS[id];
+}
+
+module.exports = { FAULTS, updateFaultStatus, resetFaults, addNote, ALLOWED_STATUSES };

@@ -62,26 +62,27 @@
                         <div class="dp-location" id="dp-location">-</div>
                         <div class="dp-desc" id="dp-desc">-</div>
                         <div class="dp-component" id="dp-component">-</div>
+
+                        <!-- SWE-04: Annotation -->
+                        <div class="dp-notes-section" id="dp-notes-section">
+                            <div class="dp-notes-list" id="dp-notes-list"></div>
+                            <div class="dp-note-form hidden" id="dp-note-form">
+                                <textarea id="dp-note-input" class="dp-note-input" placeholder="Enter site observation..." rows="2" maxlength="300"></textarea>
+                                <div class="dp-note-actions">
+                                    <button class="btn btn-sm" id="dp-note-submit">&#43;&nbsp; Save Note</button>
+                                    <button class="btn secondary btn-sm" id="dp-note-cancel">Cancel</button>
+                                </div>
+                                <div class="dp-note-status hidden" id="dp-note-status"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <div class="dp-footer">
+                    <button class="btn secondary btn-sm dp-annotate-btn" id="dp-annotate-btn">&#43;&nbsp; Add Note</button>
                     <button class="btn dp-fix-btn" id="dp-fix-btn">
                         &#9655;&nbsp; Mark as Fixed
                     </button>
-                </div>
-            </div>
-
-            <!-- Confirmation modal -->
-            <div class="fix-modal hidden" id="fix-modal">
-                <div class="fix-modal-card">
-                    <div class="fix-modal-title" id="fix-modal-title">Confirm Fix</div>
-                    <div class="fix-modal-body" id="fix-modal-body">Mark this fault as resolved?</div>
-                    <div class="fix-modal-actions">
-                        <button class="btn" id="fix-confirm-btn">&#10003;&nbsp; Confirm</button>
-                        <button class="btn secondary" id="fix-cancel-btn">Cancel</button>
-                    </div>
-                    <div class="fix-modal-status hidden" id="fix-modal-status"></div>
                 </div>
             </div>
 

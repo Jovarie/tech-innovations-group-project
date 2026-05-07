@@ -1,9 +1,8 @@
 // Scanner logic.
-// QR codes are fixed physical markers. Once a code is detected and the fault
-// looked up, the detail panel locks on and stays visible until the engineer
-// explicitly dismisses it — no need to keep the camera aimed at the marker.
-// INT-01: "Mark as Fixed" fires PATCH /api/faults/:id/status to update the
-// dashboard in real-time.
+// QR codes are fixed physical markers. Once detected the detail panel locks on
+// and stays visible until the engineer explicitly dismisses it.
+// INT-01: Mark as Fixed routes to tool-check.html (SWE-03) for pre-close tool verification.
+// SWE-04: Add Note submits annotations to POST /api/faults/:id/notes.
 
 if (!Auth.requireAuth()) {
   // requireAuth redirects; nothing more to do.
@@ -26,116 +25,110 @@ function initScanner() {
   const gateError  = document.getElementById("gate-error");
 
   // Detail panel elements
-  const panel         = document.getElementById("detail-panel");
-  const dpId          = document.getElementById("dp-id");
-  const dpStatusBadge = document.getElementById("dp-status-badge");
-  const dpPriority    = document.getElementById("dp-priority-badge");
-  const dpTitle       = document.getElementById("dp-title");
-  const dpLocation    = document.getElementById("dp-location");
-  const dpDesc        = document.getElementById("dp-desc");
-  const dpComponent   = document.getElementById("dp-component");
-  const dpImage       = document.getElementById("dp-image");
-  const dpDismissBtn  = document.getElementById("dp-dismiss-btn");
-  const dpFixBtn      = document.getElementById("dp-fix-btn");
+  const panel          = document.getElementById("detail-panel");
+  const dpId           = document.getElementById("dp-id");
+  const dpStatusBadge  = document.getElementById("dp-status-badge");
+  const dpPriority     = document.getElementById("dp-priority-badge");
+  const dpTitle        = document.getElementById("dp-title");
+  const dpLocation     = document.getElementById("dp-location");
+  const dpDesc         = document.getElementById("dp-desc");
+  const dpComponent    = document.getElementById("dp-component");
+  const dpImage        = document.getElementById("dp-image");
+  const dpDismissBtn   = document.getElementById("dp-dismiss-btn");
+  const dpFixBtn       = document.getElementById("dp-fix-btn");
+  const dpAnnotateBtn  = document.getElementById("dp-annotate-btn");
+  const dpNoteForm     = document.getElementById("dp-note-form");
+  const dpNoteInput    = document.getElementById("dp-note-input");
+  const dpNoteSubmit   = document.getElementById("dp-note-submit");
+  const dpNoteCancel   = document.getElementById("dp-note-cancel");
+  const dpNoteStatus   = document.getElementById("dp-note-status");
+  const dpNotesList    = document.getElementById("dp-notes-list");
 
-  // Fix modal elements
-  const fixModal       = document.getElementById("fix-modal");
-  const fixModalTitle  = document.getElementById("fix-modal-title");
-  const fixModalBody   = document.getElementById("fix-modal-body");
-  const fixConfirmBtn  = document.getElementById("fix-confirm-btn");
-  const fixCancelBtn   = document.getElementById("fix-cancel-btn");
-  const fixModalStatus = document.getElementById("fix-modal-status");
-
-  // Fault lookup cache
   const faultCache = new Map();
   const inflight   = new Map();
 
-  // Once a fault is identified the panel locks — the QR does not need to
-  // stay in frame. panelLocked prevents hidePanel() from firing mid-scan.
-  let panelLocked   = false;
-  let pendingFixId  = null;
-  let lastSeen      = 0;
-  const HOLD_MS     = 400;
+  let panelLocked  = false;
+  let currentFault = null;
+  let lastSeen     = 0;
+  const HOLD_MS    = 400;
 
-  // ── Fix modal ──────────────────────────────────────────────────────────────
+  // ── Annotation (SWE-04) ────────────────────────────────────────────────────
 
-  fixCancelBtn.addEventListener("click", closeFixModal);
+  dpAnnotateBtn.addEventListener("click", () => {
+    dpNoteForm.classList.toggle("hidden");
+    if (!dpNoteForm.classList.contains("hidden")) dpNoteInput.focus();
+  });
 
-  fixConfirmBtn.addEventListener("click", async () => {
-    if (!pendingFixId) return;
-    fixConfirmBtn.disabled = true;
-    fixCancelBtn.disabled  = true;
-    fixConfirmBtn.textContent = "Sending...";
-    fixModalStatus.classList.remove("hidden");
-    fixModalStatus.textContent = "Contacting server...";
+  dpNoteCancel.addEventListener("click", () => {
+    dpNoteForm.classList.add("hidden");
+    dpNoteInput.value = "";
+    dpNoteStatus.classList.add("hidden");
+  });
+
+  dpNoteSubmit.addEventListener("click", async () => {
+    const text = dpNoteInput.value.trim();
+    if (!text || !currentFault) return;
+
+    dpNoteSubmit.disabled = true;
+    dpNoteStatus.classList.remove("hidden");
+    dpNoteStatus.textContent = "Saving...";
+    dpNoteStatus.style.color = "";
 
     try {
-      const res = await Auth.fetch(
-        `/api/faults/${encodeURIComponent(pendingFixId)}/status`,
-        { method: "PATCH", body: JSON.stringify({ status: "FIXED" }) },
+      const user = Auth.getUser();
+      const res  = await Auth.fetch(
+        `/api/faults/${encodeURIComponent(currentFault.id)}/notes`,
+        { method: "POST", body: JSON.stringify({ text, author: user ? user.username : "engineer" }) },
       );
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || `Server error ${res.status}`);
-      }
+      if (!res.ok) throw new Error("Save failed");
       const updated = await res.json();
-      faultCache.set(pendingFixId, updated);
-
-      // Reflect the change immediately in the open panel
-      showPanel(updated);
-
-      fixModalStatus.textContent = "Dashboard updated in real-time.";
-      fixModalStatus.style.color = "var(--ok)";
-      fixConfirmBtn.textContent  = "Done";
-
+      faultCache.set(currentFault.id, updated);
+      currentFault = updated;
+      renderNotes(updated.notes || []);
+      dpNoteInput.value = "";
+      dpNoteStatus.textContent = "Note saved.";
+      dpNoteStatus.style.color = "var(--ok)";
       setTimeout(() => {
-        closeFixModal();
-        fixConfirmBtn.disabled    = false;
-        fixCancelBtn.disabled     = false;
-        fixConfirmBtn.textContent = "Confirm";
-        fixModalStatus.style.color = "";
-      }, 1800);
+        dpNoteForm.classList.add("hidden");
+        dpNoteStatus.classList.add("hidden");
+      }, 1400);
     } catch (err) {
-      fixModalStatus.textContent = "Error: " + (err.message || "Unknown error");
-      fixModalStatus.style.color = "var(--crit)";
-      fixConfirmBtn.disabled     = false;
-      fixCancelBtn.disabled      = false;
-      fixConfirmBtn.textContent  = "Confirm";
+      dpNoteStatus.textContent = "Error: " + (err.message || "Unknown");
+      dpNoteStatus.style.color = "var(--crit)";
+    } finally {
+      dpNoteSubmit.disabled = false;
     }
   });
 
-  function openFixModal(fault) {
-    pendingFixId = fault.id;
-    fixModalTitle.textContent = `Close Fault: ${fault.id}`;
-    fixModalBody.textContent  =
-      `"${fault.title}" in ${fault.zone}. This will be marked FIXED and the Operations Dashboard will update immediately.`;
-    fixModalStatus.classList.add("hidden");
-    fixModalStatus.textContent = "";
-    fixModal.classList.remove("hidden");
-  }
-
-  function closeFixModal() {
-    fixModal.classList.add("hidden");
-    pendingFixId = null;
+  function renderNotes(notes) {
+    if (!notes || notes.length === 0) {
+      dpNotesList.innerHTML = "";
+      return;
+    }
+    dpNotesList.innerHTML = notes.map((n) => `
+      <div class="dp-note-item">
+        <span class="dp-note-author">${escapeHtml(n.author)}</span>
+        <span class="dp-note-text">${escapeHtml(n.text)}</span>
+        <span class="dp-note-time">${formatTime(n.timestamp)}</span>
+      </div>
+    `).join("");
   }
 
   // ── Detail panel ───────────────────────────────────────────────────────────
 
   function showPanel(fault) {
     const isFixed = fault.status === "FIXED";
+    currentFault  = fault;
 
     dpId.textContent = fault.id;
-
-    dpStatusBadge.textContent  = fault.status;
-    dpStatusBadge.className    = "dp-status-badge badge " + fault.status.toLowerCase().replace(/\s+/g, "-");
-
-    dpPriority.textContent  = fault.priority;
-    dpPriority.className    = "dp-priority-badge badge " + fault.priority.toLowerCase();
-
-    dpTitle.textContent    = fault.title;
-    dpLocation.textContent = `${fault.distance} ${fault.direction.toUpperCase()} // ${fault.zone}`;
-    dpDesc.textContent     = fault.description;
-    dpComponent.textContent = fault.component || "";
+    dpStatusBadge.textContent = fault.status;
+    dpStatusBadge.className   = "dp-status-badge badge " + fault.status.toLowerCase().replace(/\s+/g, "-");
+    dpPriority.textContent    = fault.priority;
+    dpPriority.className      = "dp-priority-badge badge " + fault.priority.toLowerCase();
+    dpTitle.textContent       = fault.title;
+    dpLocation.textContent    = `${fault.distance} ${fault.direction.toUpperCase()} // ${fault.zone}`;
+    dpDesc.textContent        = fault.description;
+    dpComponent.textContent   = fault.component || "";
 
     if (fault.imageHint) {
       dpImage.src = fault.imageHint;
@@ -144,16 +137,26 @@ function initScanner() {
       dpImage.parentElement.style.display = "none";
     }
 
+    renderNotes(fault.notes || []);
+
+    // Reset annotation form
+    dpNoteForm.classList.add("hidden");
+    dpNoteInput.value = "";
+    dpNoteStatus.classList.add("hidden");
+
     if (isFixed) {
-      dpFixBtn.style.display = "none";
+      dpFixBtn.style.display     = "none";
+      dpAnnotateBtn.style.display = "none";
     } else {
-      dpFixBtn.style.display = "";
-      dpFixBtn.onclick = () => openFixModal(fault);
+      dpFixBtn.style.display     = "";
+      dpAnnotateBtn.style.display = "";
+      dpFixBtn.onclick = () => {
+        window.location.href = `/tool-check.html?fault=${encodeURIComponent(fault.id)}`;
+      };
     }
 
     panel.classList.remove("hidden");
     panelLocked = true;
-
     reticle.classList.add("hidden");
     hint.classList.add("hidden");
     statusText.textContent = isFixed ? "FAULT CLOSED" : "MARKER LOCKED";
@@ -161,7 +164,8 @@ function initScanner() {
 
   function hidePanel() {
     panel.classList.add("hidden");
-    panelLocked = false;
+    panelLocked  = false;
+    currentFault = null;
     reticle.classList.remove("hidden");
     hint.classList.remove("hidden");
     statusText.textContent = "SCANNING";
@@ -254,6 +258,18 @@ function initScanner() {
     return p;
   }
 
+  function formatTime(iso) {
+    try { return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); }
+    catch { return ""; }
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(
+      /[&<>"']/g,
+      (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
+    );
+  }
+
   // ── Main render loop ───────────────────────────────────────────────────────
 
   function tick() {
@@ -279,14 +295,12 @@ function initScanner() {
         const cached = faultCache.has(id) ? faultCache.get(id) : undefined;
 
         if (cached === undefined) {
-          // Not yet in cache — show scanning feedback and kick off lookup
           statusText.textContent = "VERIFYING...";
           drawMarker(corners, false);
           lookupFault(id).then((fault) => {
             if (fault !== undefined) showPanel(fault);
           });
         } else {
-          // Already cached (including null for unknown IDs) — lock on immediately
           drawMarker(corners, !!cached);
           showPanel(cached || {
             id,
@@ -299,6 +313,7 @@ function initScanner() {
             description: "No matching fault record. Check marker integrity.",
             component: "",
             imageHint: null,
+            notes: [],
           });
         }
       } else if (!panelLocked && performance.now() - lastSeen > HOLD_MS) {
