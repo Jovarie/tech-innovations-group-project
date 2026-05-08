@@ -89,9 +89,7 @@
 
             <!-- CTA buttons -->
             <div class="actions">
-                <a class="btn" href="/scanner.html">&#9655;&nbsp; Open AR Scanner</a>
-                <a class="btn secondary" href="/dashboard.html">View Dashboard</a>
-                <a class="btn secondary" href="/login.html" id="login-cta">Engineer Login</a>
+                <a class="btn" href="/login.html" id="login-cta">&#9654;&nbsp; Sign In</a>
             </div>
 
             <!-- System status strip -->
@@ -119,11 +117,10 @@
 
         <script src="/js/auth.js"></script>
         <script>
-            // Hide login CTA if already authenticated
+            // Already logged in — go straight to dashboard
             document.addEventListener("DOMContentLoaded", () => {
                 if (Auth.isLoggedIn()) {
-                    const el = document.getElementById("login-cta");
-                    if (el) el.style.display = "none";
+                    window.location.replace("/dashboard.html");
                 }
             });
         </script>
