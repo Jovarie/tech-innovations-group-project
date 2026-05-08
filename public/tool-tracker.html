@@ -37,7 +37,10 @@
             <div id="gate">
                 <div class="gate-title">&#128295; AR Tool Tracker</div>
                 <p>Scan the QR code on a physical tool to check it out and optionally link it to a fault repair session.</p>
-                <button class="btn" id="start-btn">&#9654;&nbsp; Start Camera</button>
+                <div class="gate-actions">
+                    <button class="btn secondary" onclick="history.back()">&#8592; Back</button>
+                    <button class="btn" id="start-btn">&#9654;&nbsp; Start Camera</button>
+                </div>
                 <small id="gate-error" class="gate-error"></small>
                 <div style="margin-top:20px;">
                     <a href="/tool-qrs.html" target="_blank" style="color:var(--hud-color-dim);font-size:11px;letter-spacing:2px;text-decoration:none;">PRINT TOOL QR CODES &#8599;</a>
