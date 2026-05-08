@@ -10,14 +10,19 @@
         <header class="topbar">
             <div class="brand">
                 <span class="pulse"></span>
-                <span>AR Maint // Operations Dashboard</span>
+                <span>AR Maint.</span>
             </div>
-            <nav>
-                <a href="/">Home</a>
-                <a href="/scanner.html">Scanner</a>
-                <a href="/tool-tracker.html">Tools</a>
-                <a href="/dashboard.html" class="active">Dashboard</a>
-                <span data-user-widget></span>
+            <nav class="topbar-nav" id="topbar-nav">
+                <button class="nav-hamburger" id="nav-hamburger" aria-label="Menu">
+                    <span></span><span></span><span></span>
+                </button>
+                <div class="nav-links" id="nav-links">
+                    <a href="/">Home</a>
+                    <a href="/scanner.html">Scanner</a>
+                    <a href="/tool-tracker.html">Tools</a>
+                    <a href="/dashboard.html" class="active">Dashboard</a>
+                    <span data-user-widget></span>
+                </div>
             </nav>
         </header>
 
@@ -139,5 +144,8 @@
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
         <script src="/js/auth.js"></script>
         <script src="/js/dashboard.js"></script>
+        <script>
+            (function(){var b=document.getElementById('nav-hamburger'),l=document.getElementById('nav-links');if(!b)return;b.addEventListener('click',function(e){e.stopPropagation();l.classList.toggle('open');});document.addEventListener('click',function(){l.classList.remove('open');});})();
+        </script>
     </body>
 </html>

@@ -10,12 +10,17 @@
         <header class="topbar">
             <div class="brand">
                 <span class="pulse"></span>
-                <span>AR Maint // Tool Verification</span>
+                <span>AR Maint.</span>
             </div>
-            <nav>
-                <a href="/scanner.html">&#8592; Back to Scanner</a>
-                <a href="/dashboard.html">Dashboard</a>
-                <span data-user-widget></span>
+            <nav class="topbar-nav" id="topbar-nav">
+                <button class="nav-hamburger" id="nav-hamburger" aria-label="Menu">
+                    <span></span><span></span><span></span>
+                </button>
+                <div class="nav-links" id="nav-links">
+                    <a href="/scanner.html">&#8592; Back to Scanner</a>
+                    <a href="/dashboard.html">Dashboard</a>
+                    <span data-user-widget></span>
+                </div>
             </nav>
         </header>
 
@@ -67,5 +72,8 @@
 
         <script src="/js/auth.js"></script>
         <script src="/js/tool-check.js"></script>
+        <script>
+            (function(){var b=document.getElementById('nav-hamburger'),l=document.getElementById('nav-links');if(!b)return;b.addEventListener('click',function(e){e.stopPropagation();l.classList.toggle('open');});document.addEventListener('click',function(){l.classList.remove('open');});})();
+        </script>
     </body>
 </html>
