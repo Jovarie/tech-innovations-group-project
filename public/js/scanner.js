@@ -63,14 +63,23 @@ function initScanner() {
   // ── Workflow constants ──────────────────────────────────────────────────────
 
   const TOOL_REGISTRY = {
-    "TOOL-WRENCH-01":  { name: "Adjustable Wrench", required: true  },
-    "TOOL-MULTI-02":   { name: "Multimeter",         required: true  },
-    "TOOL-TORCH-03":   { name: "Inspection Torch",   required: false },
-    "TOOL-THERMAL-04": { name: "Thermal Camera",     required: true  },
+    "TOOL-WRENCH-01":  { name: "Adjustable Wrench", type: "hand"       },
+    "TOOL-MULTI-02":   { name: "Multimeter",         type: "electronic" },
+    "TOOL-TORCH-03":   { name: "Inspection Torch",   type: "light"      },
+    "TOOL-THERMAL-04": { name: "Thermal Camera",     type: "electronic" },
+    "TOOL-PROBE-06":   { name: "Voltage Probe",      type: "electronic" },
+    "TOOL-TAPE-07":    { name: "Insulation Tape",    type: "hand"       },
+    "TOOL-GAUGE-05":   { name: "Crack Gauge",        type: "hand"       },
   };
 
-  const REQUIRED_TOOL_IDS = Object.entries(TOOL_REGISTRY)
-    .filter(([, t]) => t.required).map(([id]) => id);
+  // Per-fault required tool lists — only these need to be scanned to proceed
+  const FAULT_TOOL_MAP = {
+    "FAULT-101": ["TOOL-MULTI-02",   "TOOL-PROBE-06"],
+    "FAULT-102": ["TOOL-WRENCH-01",  "TOOL-THERMAL-04", "TOOL-TAPE-07"],
+    "FAULT-103": ["TOOL-TORCH-03",   "TOOL-GAUGE-05"],
+  };
+
+  let requiredToolIds = [];
 
   const VERIFY_STEPS = [
     {
@@ -238,6 +247,7 @@ function initScanner() {
   function beginRepair() {
     if (!currentFault) return;
     scannedTools.clear();
+    requiredToolIds = FAULT_TOOL_MAP[currentFault.id] || Object.keys(TOOL_REGISTRY);
     scanMode = "tools";
     panel.classList.add("hidden");
     wfToolsFault.textContent = currentFault.id + " // " + currentFault.title;
@@ -247,15 +257,16 @@ function initScanner() {
   }
 
   function renderToolStep() {
-    const allRequired = REQUIRED_TOOL_IDS.every((id) => scannedTools.has(id));
+    const allRequired = requiredToolIds.every((id) => scannedTools.has(id));
     wfToolsNext.disabled = !allRequired;
 
-    wfToolsList.innerHTML = Object.entries(TOOL_REGISTRY).map(([id, tool]) => {
+    wfToolsList.innerHTML = requiredToolIds.map((id) => {
+      const tool = TOOL_REGISTRY[id];
       const done = scannedTools.has(id);
       return `<div class="wf-tool-row${done ? " wf-tool-scanned" : ""}">
         <div class="wf-tool-info">
-          <span class="wf-tool-name">${escapeHtml(tool.name)}</span>
-          <span class="wf-tool-badge${tool.required ? "" : " wf-badge-opt"}">${tool.required ? "REQUIRED" : "OPTIONAL"}</span>
+          <span class="wf-tool-name">${escapeHtml(tool ? tool.name : id)}</span>
+          <span class="wf-tool-badge">REQUIRED</span>
         </div>
         <span class="wf-tool-check">${done ? "&#10003;" : "&#9675;"}</span>
       </div>`;

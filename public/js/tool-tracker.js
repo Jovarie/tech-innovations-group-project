@@ -8,10 +8,13 @@ if (!Auth.requireAuth()) {
 }
 
 const TOOLS = {
-  "TOOL-WRENCH-01":  { name: "Adjustable Wrench", required: true,  type: "hand" },
-  "TOOL-MULTI-02":   { name: "Multimeter",         required: true,  type: "electronic" },
-  "TOOL-TORCH-03":   { name: "Inspection Torch",   required: false, type: "light" },
-  "TOOL-THERMAL-04": { name: "Thermal Camera",     required: true,  type: "electronic" },
+  "TOOL-WRENCH-01":  { name: "Adjustable Wrench", type: "hand"       },
+  "TOOL-MULTI-02":   { name: "Multimeter",         type: "electronic" },
+  "TOOL-TORCH-03":   { name: "Inspection Torch",   type: "light"      },
+  "TOOL-THERMAL-04": { name: "Thermal Camera",     type: "electronic" },
+  "TOOL-PROBE-06":   { name: "Voltage Probe",      type: "electronic" },
+  "TOOL-TAPE-07":    { name: "Insulation Tape",    type: "hand"       },
+  "TOOL-GAUGE-05":   { name: "Crack Gauge",        type: "hand"       },
 };
 
 const video         = document.getElementById("tool-video");
@@ -68,7 +71,7 @@ function renderSession() {
     const info    = TOOLS[t.toolId];
     const name    = info ? info.name : t.toolId;
     const elapsed = Math.round((Date.now() - new Date(t.checkedOutAt).getTime()) / 60000);
-    const overdue = info && info.required && elapsed > 120;
+    const overdue = info && elapsed > 120;
     return `<div class="tt-tool-row${overdue ? " tt-tool-overdue" : ""}">
       <div class="tt-tool-info">
         <div class="tt-tool-name">&#128295;&nbsp;${escapeHtml(name)}</div>
@@ -174,7 +177,7 @@ function showLabel(toolId, isOut) {
   tlTag.textContent    = isOut ? "CHECKED OUT" : "AVAILABLE";
   tlTag.className      = "label-tag";
   tlName.textContent   = info.name;
-  tlStatus.textContent = `STATUS: ${isOut ? "OUT" : "IN"}  |  ${info.required ? "REQUIRED" : "OPTIONAL"}`;
+  tlStatus.textContent = `STATUS: ${isOut ? "OUT" : "IN"}`;
   tlType.textContent   = typeLabel(info.type);
 
   if (isOut) {

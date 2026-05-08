@@ -57,10 +57,13 @@
         <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
         <script>
             const TOOLS = [
-                { id: "TOOL-WRENCH-01",  name: "Adjustable Wrench", required: true  },
-                { id: "TOOL-MULTI-02",   name: "Multimeter",         required: true  },
-                { id: "TOOL-TORCH-03",   name: "Inspection Torch",   required: false },
-                { id: "TOOL-THERMAL-04", name: "Thermal Camera",     required: true  },
+                { id: "TOOL-WRENCH-01",  name: "Adjustable Wrench" },
+                { id: "TOOL-MULTI-02",   name: "Multimeter"         },
+                { id: "TOOL-TORCH-03",   name: "Inspection Torch"   },
+                { id: "TOOL-THERMAL-04", name: "Thermal Camera"     },
+                { id: "TOOL-PROBE-06",   name: "Voltage Probe"      },
+                { id: "TOOL-TAPE-07",    name: "Insulation Tape"    },
+                { id: "TOOL-GAUGE-05",   name: "Crack Gauge"        },
             ];
 
             const grid = document.getElementById("grid");
@@ -81,14 +84,9 @@
                 nameEl.className   = "tool-name";
                 nameEl.textContent = tool.name;
 
-                const badge = document.createElement("div");
-                badge.className   = "tool-badge" + (tool.required ? "" : " optional");
-                badge.textContent = tool.required ? "REQUIRED" : "OPTIONAL";
-
                 card.appendChild(canvas);
                 card.appendChild(idEl);
                 card.appendChild(nameEl);
-                card.appendChild(badge);
                 grid.appendChild(card);
             });
         </script>
