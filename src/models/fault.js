@@ -1,8 +1,11 @@
 const fs   = require("fs");
 const path = require("path");
 
-const DATA_FILE = path.join(__dirname, "../../data/faults.json");
 const SEED_FILE = path.join(__dirname, "../../data/faults.seed.json");
+// /tmp is writable on Vercel serverless; project data dir is read-only
+const DATA_FILE = process.env.VERCEL
+  ? "/tmp/faults.json"
+  : path.join(__dirname, "../../data/faults.json");
 
 function load() {
   try {
@@ -13,11 +16,18 @@ function load() {
 }
 
 function save(faults) {
-  try { fs.writeFileSync(DATA_FILE, JSON.stringify(faults, null, 2)); } catch { /* read-only fs on Vercel */ }
+  try { fs.writeFileSync(DATA_FILE, JSON.stringify(faults, null, 2)); } catch { /* ignore */ }
 }
 
 // Live reference — mutated in place so existing imports stay valid
 const FAULTS = load();
+
+// Re-sync FAULTS from disk (call at the start of read routes so /tmp writes are reflected)
+function reload() {
+  const fresh = load();
+  Object.keys(FAULTS).forEach((k) => delete FAULTS[k]);
+  Object.assign(FAULTS, fresh);
+}
 
 const ALLOWED_STATUSES = ["OPEN", "IN PROGRESS", "FIXED"];
 
@@ -45,4 +55,4 @@ function addNote(id, text, author) {
   return FAULTS[id];
 }
 
-module.exports = { FAULTS, updateFaultStatus, resetFaults, addNote, ALLOWED_STATUSES };
+module.exports = { FAULTS, updateFaultStatus, resetFaults, addNote, reload, ALLOWED_STATUSES };

@@ -1,9 +1,22 @@
 const express = require("express");
 const crypto  = require("crypto");
+const fs      = require("fs");
 const { authRequired } = require("../middleware/auth");
 const rbacMiddleware   = require("../middleware/rbacMiddleware");
 
 const router = express.Router();
+
+const SESSION_FILE  = process.env.VERCEL ? "/tmp/tool-session.json"  : null;
+const HISTORY_FILE  = process.env.VERCEL ? "/tmp/tool-history.json"  : null;
+
+function readJson(file, fallback) {
+  if (!file) return fallback;
+  try { return JSON.parse(fs.readFileSync(file, "utf8")); } catch { return fallback; }
+}
+function writeJson(file, data) {
+  if (!file) return;
+  try { fs.writeFileSync(file, JSON.stringify(data)); } catch { /* ignore */ }
+}
 
 const TOOLS = {
   "TOOL-WRENCH-01":  { id: "TOOL-WRENCH-01",  name: "Adjustable Wrench", type: "hand"       },
@@ -15,9 +28,9 @@ const TOOLS = {
   "TOOL-GAUGE-05":   { id: "TOOL-GAUGE-05",   name: "Crack Gauge",       type: "hand"       },
 };
 
-// In-memory session — resets on server restart (acceptable for TRL-3 demo)
-let activeCheckouts = [];
-let toolHistory     = [];
+// Session arrays — written to /tmp on Vercel so same-instance requests stay in sync
+let activeCheckouts = readJson(SESSION_FILE, []);
+let toolHistory     = readJson(HISTORY_FILE, []);
 
 // GET /api/tools/session — current checkouts + full tool list
 router.get(
@@ -25,6 +38,8 @@ router.get(
   authRequired,
   rbacMiddleware.checkPermission("read_ar"),
   (req, res) => {
+    activeCheckouts = readJson(SESSION_FILE, activeCheckouts);
+    toolHistory     = readJson(HISTORY_FILE, toolHistory);
     const detailed = activeCheckouts.map((t) => ({
       ...t,
       toolDetails: TOOLS[t.toolId] || null,
@@ -64,6 +79,8 @@ router.post(
       timestamp: new Date().toISOString(),
     });
 
+    writeJson(SESSION_FILE, activeCheckouts);
+    writeJson(HISTORY_FILE, toolHistory);
     res.json({ success: true, checkout: entry });
   },
 );
@@ -91,6 +108,8 @@ router.post(
       timestamp: new Date().toISOString(),
     });
 
+    writeJson(SESSION_FILE, activeCheckouts);
+    writeJson(HISTORY_FILE, toolHistory);
     res.json({ success: true });
   },
 );
@@ -101,6 +120,7 @@ router.get(
   authRequired,
   rbacMiddleware.checkPermission("read_ar"),
   (req, res) => {
+    toolHistory = readJson(HISTORY_FILE, toolHistory);
     res.json({ history: toolHistory.slice(-100).reverse() });
   },
 );
