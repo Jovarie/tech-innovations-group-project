@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>AR Maintenance // Tool QR Codes</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background: #f4f4f4;
+                padding: 24px;
+                text-align: center;
+            }
+            h1 {
+                font-size: 22px;
+                margin-bottom: 6px;
+            }
+            p {
+                color: #555;
+                margin-bottom: 24px;
+            }
+            .grid {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 32px;
+                justify-content: center;
+            }
+            .card {
+                background: #fff;
+                border: 1px solid #ddd;
+                border-radius: 10px;
+                padding: 24px 20px 16px;
+                text-align: center;
+                width: 180px;
+            }
+            .card canvas {
+                display: block;
+                margin: 0 auto;
+            }
+            .card .tool-id {
+                font-size: 11px;
+                color: #888;
+                margin-top: 10px;
+                font-family: monospace;
+            }
+            .card .tool-name {
+                font-size: 14px;
+                font-weight: bold;
+                margin-top: 4px;
+            }
+            .card .tool-badge {
+                display: inline-block;
+                margin-top: 8px;
+                font-size: 10px;
+                padding: 2px 8px;
+                border-radius: 20px;
+                background: #fee2e2;
+                color: #b91c1c;
+            }
+            .card .tool-badge.optional {
+                background: #f0fdf4;
+                color: #15803d;
+            }
+            @media print {
+                button {
+                    display: none;
+                }
+                body {
+                    background: #fff;
+                    padding: 8px;
+                }
+            }
+            .print-btn {
+                display: inline-block;
+                margin-bottom: 28px;
+                padding: 10px 24px;
+                background: #0d1117;
+                color: #fff;
+                border: none;
+                border-radius: 6px;
+                font-size: 14px;
+                cursor: pointer;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>AR Tool Tracker &mdash; QR Codes</h1>
+        <p>
+            Print this page, cut out each card, and tape it to the corresponding
+            physical tool.<br />
+            The AR scanner will detect these codes and link tool usage to fault
+            repairs.
+        </p>
+        <button class="print-btn" onclick="window.print()">
+            &#128438;&nbsp; Print / Save as PDF
+        </button>
+        <div class="grid" id="grid"></div>
+
+        <script src="/js/qrcode.min.js"></script>
+        <script>
+            const TOOLS = [
+                { id: "TOOL-WRENCH-01", name: "Adjustable Wrench" },
+                { id: "TOOL-MULTI-02", name: "Multimeter" },
+                { id: "TOOL-TORCH-03", name: "Inspection Torch" },
+                { id: "TOOL-THERMAL-04", name: "Thermal Camera" },
+                { id: "TOOL-PROBE-06", name: "Voltage Probe" },
+                { id: "TOOL-TAPE-07", name: "Insulation Tape" },
+                { id: "TOOL-GAUGE-05", name: "Crack Gauge" },
+            ];
+
+            const grid = document.getElementById("grid");
+            TOOLS.forEach((tool) => {
+                const card = document.createElement("div");
+                card.className = "card";
+
+                const qrWrap = document.createElement("div");
+                new QRCode(qrWrap, { text: tool.id, width: 140, height: 140, correctLevel: QRCode.CorrectLevel.M });
+
+                const idEl = document.createElement("div");
+                idEl.className = "tool-id";
+                idEl.textContent = tool.id;
+
+                const nameEl = document.createElement("div");
+                nameEl.className = "tool-name";
+                nameEl.textContent = tool.name;
+
+                card.appendChild(qrWrap);
+                card.appendChild(idEl);
+                card.appendChild(nameEl);
+                grid.appendChild(card);
+            });
+        </script>
+    </body>
+</html>

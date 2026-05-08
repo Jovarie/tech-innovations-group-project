@@ -24,6 +24,7 @@
                     <span id="status-text">SCANNING</span>
                 </div>
                 <div class="right">
+                    <a href="/tool-tracker.html">Tools</a>
                     <a href="/dashboard.html">Dashboard</a>
                     <span data-user-widget></span>
                 </div>
@@ -62,26 +63,59 @@
                         <div class="dp-location" id="dp-location">-</div>
                         <div class="dp-desc" id="dp-desc">-</div>
                         <div class="dp-component" id="dp-component">-</div>
+
+                        <!-- SWE-04: Annotation -->
+                        <div class="dp-notes-section" id="dp-notes-section">
+                            <div class="dp-notes-list" id="dp-notes-list"></div>
+                            <div class="dp-note-form hidden" id="dp-note-form">
+                                <textarea id="dp-note-input" class="dp-note-input" placeholder="Enter site observation..." rows="2" maxlength="300"></textarea>
+                                <div class="dp-note-actions">
+                                    <button class="btn btn-sm" id="dp-note-submit">&#43;&nbsp; Save Note</button>
+                                    <button class="btn secondary btn-sm" id="dp-note-cancel">Cancel</button>
+                                </div>
+                                <div class="dp-note-status hidden" id="dp-note-status"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <div class="dp-footer">
+                    <button class="btn secondary btn-sm dp-annotate-btn" id="dp-annotate-btn">&#43;&nbsp; Add Note</button>
                     <button class="btn dp-fix-btn" id="dp-fix-btn">
-                        &#9655;&nbsp; Mark as Fixed
+                        &#128295;&nbsp; Scan Tools
                     </button>
                 </div>
             </div>
 
-            <!-- Confirmation modal -->
-            <div class="fix-modal hidden" id="fix-modal">
-                <div class="fix-modal-card">
-                    <div class="fix-modal-title" id="fix-modal-title">Confirm Fix</div>
-                    <div class="fix-modal-body" id="fix-modal-body">Mark this fault as resolved?</div>
-                    <div class="fix-modal-actions">
-                        <button class="btn" id="fix-confirm-btn">&#10003;&nbsp; Confirm</button>
-                        <button class="btn secondary" id="fix-cancel-btn">Cancel</button>
+            <!-- Workflow Step 1: Scan Tools -->
+            <div id="step-tools" class="wf-step hidden">
+                <div class="wf-step-header">
+                    <div class="wf-step-label">STEP 1 OF 3 — CHECK OUT TOOLS</div>
+                    <div class="wf-fault-ctx" id="wf-tools-fault">—</div>
+                </div>
+                <p class="wf-instruction">Point camera at each tool QR code to log it for this job. All required tools must be scanned before continuing.</p>
+                <div class="wf-tool-list" id="wf-tool-list"></div>
+                <div class="wf-footer">
+                    <button class="btn secondary btn-sm" id="wf-tools-back">&#8592; Back</button>
+                    <button class="btn btn-sm" id="wf-tools-next" disabled>Proceed to Verify &#8594;</button>
+                </div>
+            </div>
+
+            <!-- Workflow Step 2: Sequential Verification -->
+            <div id="step-verify" class="wf-step hidden">
+                <div class="wf-step-header">
+                    <div class="wf-step-label">STEP 2 OF 3 — PRE-CLOSE CHECKS</div>
+                    <div class="wf-progress-row">
+                        <span id="wf-verify-count">0</span>&thinsp;/&thinsp;3
+                        <div class="wf-progress-track">
+                            <div class="wf-progress-fill" id="wf-verify-fill" style="width:0%"></div>
+                        </div>
                     </div>
-                    <div class="fix-modal-status hidden" id="fix-modal-status"></div>
+                </div>
+                <div class="wf-verify-card" id="wf-verify-card"></div>
+                <div class="wf-footer">
+                    <button class="btn secondary btn-sm" id="wf-verify-back">&#8592; Back</button>
+                    <button class="btn btn-sm" id="wf-verify-confirm">&#10003;&nbsp; Confirm Present</button>
                 </div>
             </div>
 

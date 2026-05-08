@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>AR Maintenance // Tool Verification</title>
+        <link rel="stylesheet" href="/css/style.css" />
+    </head>
+    <body>
+        <header class="topbar">
+            <div class="brand">
+                <span class="pulse"></span>
+                <span>AR Maint // Tool Verification</span>
+            </div>
+            <nav>
+                <a href="/scanner.html">&#8592; Back to Scanner</a>
+                <a href="/dashboard.html">Dashboard</a>
+                <span data-user-widget></span>
+            </nav>
+        </header>
+
+        <main class="tc-wrap">
+            <div class="tc-header">
+                <div class="tc-step-label">STEP 2 OF 2 — PRE-CLOSE VERIFICATION</div>
+                <h2>Tool Presence Check Required</h2>
+                <div class="tc-fault-ctx">
+                    <span class="tc-fault-id" id="tc-fault-id">—</span>
+                    <span class="tc-sep">//</span>
+                    <span class="tc-fault-title" id="tc-fault-title">Loading...</span>
+                    <span class="tc-sep">//</span>
+                    <span class="tc-fault-zone" id="tc-fault-zone">—</span>
+                </div>
+                <p class="tc-instructions">
+                    Verify each required item is present at the work site before
+                    closing this fault. All three markers must be confirmed.
+                </p>
+            </div>
+
+            <div class="tc-tools" id="tc-tools"></div>
+
+            <div class="tc-footer">
+                <div class="tc-progress-wrap">
+                    <div class="tc-progress-label">
+                        <span id="tc-count">0</span>&nbsp;/ 3 MARKERS VERIFIED
+                    </div>
+                    <div class="tc-progress-track">
+                        <div class="tc-progress-fill" id="tc-progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+                <button class="btn tc-confirm-btn" id="tc-confirm-btn" disabled>
+                    &#9655;&nbsp; Confirm Fix &amp; Close Task
+                </button>
+            </div>
+
+            <div class="tc-success" id="tc-success">
+                <div class="tc-success-card">
+                    <div class="tc-success-icon">&#10003;</div>
+                    <div class="tc-success-title">FAULT CLOSED</div>
+                    <div class="tc-success-detail" id="tc-success-fault">—</div>
+                    <div class="tc-success-sub">
+                        Dashboard is being updated in real-time.<br />
+                        Redirecting to operations view...
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <script src="/js/auth.js"></script>
+        <script src="/js/tool-check.js"></script>
+    </body>
+</html>

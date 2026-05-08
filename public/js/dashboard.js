@@ -1,11 +1,19 @@
-// Dashboard logic: fetches fault registry and zone access data.
+// Dashboard logic: fetches fault registry, zone access data, and analytics.
 // INT-01: Polls every 5 seconds so fixes made in the AR scanner appear in real-time.
 // CYB-03: Fetches /api/zones - restricted zone details visible only to authorised roles.
+// SWE-04: Fault table shows note count per fault.
+
+let statusChart   = null;
+let priorityChart = null;
 
 if (Auth.requireAuth()) {
   loadDashboard();
   loadZones();
-  setInterval(loadDashboard, 5000);
+  loadAnalytics();
+  loadToolSession();
+  setInterval(loadDashboard,    5000);
+  setInterval(loadAnalytics,   10000);
+  setInterval(loadToolSession, 15000);
 
   const resetBtn = document.getElementById("reset-faults-btn");
   if (resetBtn) {
@@ -14,8 +22,12 @@ if (Auth.requireAuth()) {
       resetBtn.textContent = "Resetting...";
       try {
         const res = await Auth.fetch("/api/faults/reset", { method: "POST" });
-        if (!res.ok) throw new Error("Reset failed");
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error || `Server error ${res.status}`);
+        }
         await loadDashboard();
+        await loadAnalytics();
       } catch (err) {
         alert("Reset failed: " + err.message);
       } finally {
@@ -62,12 +74,16 @@ function renderFaults(faults) {
   }
 
   body.innerHTML = faults.map((f) => {
-    const pc = f.priority.toLowerCase();
-    const sc = f.status.toLowerCase().replace(/\s+/g, "-");
+    const pc       = f.priority.toLowerCase();
+    const sc       = f.status.toLowerCase().replace(/\s+/g, "-");
     const rowClass = f.status === "FIXED" ? " class=\"row-fixed\"" : "";
+    const notes    = f.notes ? f.notes.length : 0;
+    const notesTag = notes > 0
+      ? `<span class="notes-badge" title="${notes} annotation${notes > 1 ? "s" : ""}">&#9998;&nbsp;${notes}</span>`
+      : "";
     return `<tr${rowClass}>
       <td>${escapeHtml(f.id)}</td>
-      <td>${escapeHtml(f.title)}</td>
+      <td>${escapeHtml(f.title)}${notesTag}</td>
       <td>${escapeHtml(f.zone)}</td>
       <td>${escapeHtml(f.distance)} ${escapeHtml(f.direction)}</td>
       <td><span class="badge ${pc}">${escapeHtml(f.priority)}</span></td>
@@ -137,6 +153,135 @@ function renderZoneCard(zone) {
         : ""}
     </div>
   </div>`;
+}
+
+// ─── Analytics + Charts ──────────────────────────────────────────────────────
+
+const CHART_COLOURS = {
+  OPEN:         "#00f0ff",
+  "IN PROGRESS":"#f0c000",
+  FIXED:        "#5dffb0",
+  CRITICAL:     "#ff4d6a",
+  HIGH:         "#ff9933",
+  MEDIUM:       "#f0c000",
+  LOW:          "#5dffb0",
+};
+
+async function loadAnalytics() {
+  try {
+    const res  = await Auth.fetch("/api/analytics");
+    if (!res.ok) return;
+    const data = await res.json();
+    renderStatusChart(data.byStatus);
+    renderPriorityChart(data.byPriority);
+    renderPredictions(data.predictions || []);
+  } catch (_) { /* non-critical — analytics section stays loading */ }
+}
+
+function renderStatusChart(byStatus) {
+  const ctx    = document.getElementById("chart-status");
+  if (!ctx) return;
+  const labels = Object.keys(byStatus);
+  const values = Object.values(byStatus);
+  const colours = labels.map((l) => CHART_COLOURS[l] || "#888");
+
+  if (statusChart) { statusChart.destroy(); }
+  statusChart = new Chart(ctx, {
+    type: "doughnut",
+    data: { labels, datasets: [{ data: values, backgroundColor: colours, borderWidth: 0 }] },
+    options: {
+      plugins: { legend: { labels: { color: "#cdeaf0", font: { size: 11 } } } },
+      cutout: "65%",
+    },
+  });
+}
+
+function renderPriorityChart(byPriority) {
+  const ctx    = document.getElementById("chart-priority");
+  if (!ctx) return;
+  const labels  = Object.keys(byPriority);
+  const values  = Object.values(byPriority);
+  const colours = labels.map((l) => CHART_COLOURS[l] || "#888");
+
+  if (priorityChart) { priorityChart.destroy(); }
+  priorityChart = new Chart(ctx, {
+    type: "bar",
+    data: { labels, datasets: [{ data: values, backgroundColor: colours, borderWidth: 0 }] },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: "#cdeaf0", font: { size: 10 } }, grid: { color: "rgba(0,240,255,0.08)" } },
+        y: { ticks: { color: "#cdeaf0", font: { size: 10 }, stepSize: 1 }, grid: { color: "rgba(0,240,255,0.08)" } },
+      },
+    },
+  });
+}
+
+function renderPredictions(predictions) {
+  const el = document.getElementById("predictions-body");
+  if (!el) return;
+  if (!predictions.length) {
+    el.innerHTML = '<div class="empty-state">All active faults within target resolution window.</div>';
+    return;
+  }
+  el.innerHTML = predictions.map((p) => {
+    const riskClass = p.overdue ? "risk-high" : p.riskScore >= 60 ? "risk-med" : "risk-low";
+    const label     = p.overdue
+      ? `OVERDUE by ${Math.abs(p.daysLeft).toFixed(1)}d`
+      : `${p.daysLeft.toFixed(1)}d remaining`;
+    return `<div class="prediction-row">
+      <div class="prediction-id">${escapeHtml(p.id)}</div>
+      <div class="prediction-title">${escapeHtml(p.title)}</div>
+      <div class="prediction-bar-wrap">
+        <div class="prediction-bar ${riskClass}" style="width:${Math.min(100, p.riskScore)}%"></div>
+      </div>
+      <div class="prediction-label ${riskClass}">${label}</div>
+    </div>`;
+  }).join("");
+}
+
+// ─── Tool session panel ──────────────────────────────────────────────────────
+
+const REQUIRED_TOOLS = ["TOOL-WRENCH-01", "TOOL-MULTI-02", "TOOL-THERMAL-04"];
+
+async function loadToolSession() {
+  const body    = document.getElementById("tool-alert-body");
+  const iconEl  = document.getElementById("tool-alert-icon");
+  try {
+    const res = await Auth.fetch("/api/tools/session");
+    if (!res.ok) throw new Error("unavailable");
+    const { activeTools, allTools } = await res.json();
+
+    if (!activeTools.length) {
+      body.innerHTML = '<div class="empty-state">No tools currently checked out.</div>';
+      iconEl.textContent = "&#128295;";
+      return;
+    }
+
+    const now = Date.now();
+    let hasAlert = false;
+    body.innerHTML = activeTools.map((t) => {
+      const info    = (allTools || []).find((a) => a.id === t.toolId) || {};
+      const name    = info.name || t.toolId;
+      const elapsed = Math.round((now - new Date(t.checkedOutAt).getTime()) / 60000);
+      const overdue = info.required && elapsed > 120;
+      if (overdue) hasAlert = true;
+      return `<div class="tool-session-row${overdue ? " tool-session-alert" : ""}">
+        <div class="tool-session-info">
+          <span class="tool-session-name">${escapeHtml(name)}</span>
+          ${t.faultId ? `<span class="tool-session-fault">&#128279;&nbsp;${escapeHtml(t.faultId)}</span>` : ""}
+        </div>
+        <div class="tool-session-right">
+          <span class="tool-session-time${overdue ? " tool-time-alert" : ""}">${elapsed}m out</span>
+          ${overdue ? `<span class="badge critical" style="font-size:9px;">OVERDUE</span>` : ""}
+        </div>
+      </div>`;
+    }).join("");
+
+    iconEl.textContent = hasAlert ? "⚠️" : "&#128295;";
+  } catch (_) {
+    body.innerHTML = '<div class="empty-state">Tool session unavailable.</div>';
+  }
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

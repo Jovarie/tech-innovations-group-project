@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+        <title>AR Maintenance // Tool Tracker</title>
+        <link rel="stylesheet" href="/css/style.css" />
+    </head>
+    <body class="scene">
+        <div id="scene">
+            <video id="tool-video" autoplay playsinline muted></video>
+
+            <!-- Top HUD bar -->
+            <div id="scanner-bar">
+                <div class="left">
+                    <button class="scanner-back-btn" onclick="history.back()">&#8592; Back</button>
+                    <span class="pulse"></span>
+                    <span>AR Maint // Tool Tracker</span>
+                    <span id="status-text">READY</span>
+                </div>
+                <div class="right">
+                    <a href="/dashboard.html">Dashboard</a>
+                    <span data-user-widget></span>
+                </div>
+            </div>
+
+            <!-- Corner reticle -->
+            <div id="reticle">
+                <div class="corner tl"></div>
+                <div class="corner tr"></div>
+                <div class="corner bl"></div>
+                <div class="corner br"></div>
+            </div>
+            <div id="hint">ALIGN TOOL QR WITHIN FRAME</div>
+
+            <!-- Camera gate / start screen -->
+            <div id="gate">
+                <div class="gate-title">&#128295; AR Tool Tracker</div>
+                <p>Scan the QR code on a physical tool to check it out and optionally link it to a fault repair session.</p>
+                <div class="gate-actions">
+                    <button class="btn secondary" onclick="history.back()">&#8592; Back</button>
+                    <button class="btn" id="start-btn">&#9654;&nbsp; Start Camera</button>
+                </div>
+                <small id="gate-error" class="gate-error"></small>
+                <div style="margin-top:20px;">
+                    <a href="/tool-qrs.html" target="_blank" style="color:var(--hud-color-dim);font-size:11px;letter-spacing:2px;text-decoration:none;">PRINT TOOL QR CODES &#8599;</a>
+                </div>
+            </div>
+
+            <!-- AR overlay label (positioned by JS) -->
+            <div id="tool-label" class="label-card"
+                 style="position:absolute;top:0;left:0;transform:translate(-9999px,-9999px);opacity:0;transition:opacity 0.18s;z-index:20;min-width:260px;max-width:320px;">
+                <div class="label-tag" id="tl-tag">TOOL DETECTED</div>
+                <div class="label-title" id="tl-name">—</div>
+                <div class="label-direction" id="tl-status">—</div>
+                <div class="label-desc" id="tl-type">—</div>
+                <div id="tl-action" style="margin-top:10px;"></div>
+            </div>
+
+            <!-- Checked-out tools panel -->
+            <div id="session-panel" class="tt-session-panel hidden">
+                <div class="tt-panel-header">
+                    <span>&#128295;&nbsp;SESSION TOOLS</span>
+                    <button class="tt-panel-close" onclick="toggleSession()">&#10005;</button>
+                </div>
+                <div id="session-list" class="tt-session-list"></div>
+                <div class="tt-panel-footer">
+                    <a href="#" onclick="toggleHistory();return false;" style="color:var(--hud-color-dim);font-size:11px;letter-spacing:1px;">VIEW HISTORY &#9660;</a>
+                </div>
+                <div id="history-section" class="hidden">
+                    <div class="tt-history-title">RECENT ACTIVITY</div>
+                    <div id="history-list" class="tt-history-list"></div>
+                </div>
+            </div>
+
+            <!-- Floating toggle button -->
+            <button id="session-toggle" class="tt-session-toggle" onclick="toggleSession()">
+                &#128295;&nbsp;<span id="session-count">0</span>&nbsp;OUT
+            </button>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+        <script src="/js/auth.js"></script>
+        <script src="/js/tool-tracker.js"></script>
+    </body>
+</html>

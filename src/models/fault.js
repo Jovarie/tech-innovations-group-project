@@ -5,7 +5,14 @@ const DATA_FILE = path.join(__dirname, "../../data/faults.json");
 const SEED_FILE = path.join(__dirname, "../../data/faults.seed.json");
 
 function load() {
-  return JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
+  try {
+    return JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
+  } catch {
+    // faults.json missing (fresh clone) — seed it from the canonical seed file
+    const seed = JSON.parse(fs.readFileSync(SEED_FILE, "utf8"));
+    fs.writeFileSync(DATA_FILE, JSON.stringify(seed, null, 2));
+    return seed;
+  }
 }
 
 function save(faults) {
@@ -33,4 +40,12 @@ function resetFaults() {
   return FAULTS;
 }
 
-module.exports = { FAULTS, updateFaultStatus, resetFaults, ALLOWED_STATUSES };
+function addNote(id, text, author) {
+  if (!FAULTS[id]) return null;
+  const note = { text, author, timestamp: new Date().toISOString() };
+  FAULTS[id].notes = [...(FAULTS[id].notes || []), note];
+  save(FAULTS);
+  return FAULTS[id];
+}
+
+module.exports = { FAULTS, updateFaultStatus, resetFaults, addNote, ALLOWED_STATUSES };
