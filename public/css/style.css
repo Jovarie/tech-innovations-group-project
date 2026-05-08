@@ -1934,3 +1934,90 @@ tr.row-fixed td { opacity: 0.5; }
 .tool-session-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
 .tool-session-time  { font-size: 11px; color: var(--hud-color-dim); }
 .tool-time-alert    { color: var(--crit); }
+
+/* ═══════════════════════════════════════════════════════════
+   MOBILE — safe areas, touch targets, responsive layout
+═══════════════════════════════════════════════════════════ */
+
+/* Safe-area insets for iPhone notch / home indicator */
+#scanner-bar {
+    padding-top: calc(10px + env(safe-area-inset-top));
+    padding-left: calc(14px + env(safe-area-inset-left));
+    padding-right: calc(14px + env(safe-area-inset-right));
+}
+#gate {
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+}
+.detail-panel,
+.wf-step {
+    padding-bottom: calc(14px + env(safe-area-inset-bottom));
+}
+.tt-session-toggle {
+    bottom: calc(24px + env(safe-area-inset-bottom));
+    right: calc(20px + env(safe-area-inset-right));
+}
+
+@media (max-width: 600px) {
+    /* Dashboard padding */
+    .dash { padding: 16px 14px 60px; }
+    .dash-title-row { flex-direction: column; gap: 8px; }
+    .dash-title-right { align-items: flex-start; }
+
+    /* Stack metrics 2-up on phones */
+    .metric-row { grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* Table: keep horizontal scroll but hint at it */
+    .table-wrap { -webkit-overflow-scrolling: touch; }
+
+    /* Topbar: tighten spacing */
+    .topbar { padding: 10px 14px; letter-spacing: 1px; }
+    .topbar nav { gap: 10px; }
+
+    /* Scanner HUD bar: shrink text, tighten gaps */
+    #scanner-bar {
+        font-size: 10px;
+        letter-spacing: 1px;
+    }
+    #scanner-bar .left,
+    #scanner-bar .right { gap: 8px; }
+
+    /* Hide secondary nav items in scanner bar on small screens */
+    #scanner-bar .right a:not(:last-child) { display: none; }
+
+    /* Minimum touch targets */
+    .btn { min-height: 44px; display: flex; align-items: center; justify-content: center; }
+    .btn.btn-sm { min-height: 36px; }
+    .scanner-back-btn { min-height: 36px; padding: 6px 12px; }
+    .dp-dismiss-btn { width: 36px; height: 36px; }
+
+    /* Detail panel: taller on mobile */
+    .detail-panel { max-height: 80vh; }
+
+    /* Workflow steps: full height */
+    .wf-step { max-height: 82vh; }
+
+    /* Tool tracker session panel: stretch to near-full width */
+    .tt-session-panel {
+        left: 8px;
+        right: 8px;
+        width: auto;
+        bottom: calc(64px + env(safe-area-inset-bottom));
+    }
+
+    /* Gate title size */
+    .gate-title { font-size: 18px !important; }
+    #gate h1 { font-size: 16px; letter-spacing: 2px; }
+    #gate p { font-size: 12px; }
+
+    /* Hero: hide architecture diagram, it's too wide */
+    .arch-diagram { display: none; }
+    .welcome { padding: 24px 16px 48px; }
+    .welcome h1 { font-size: clamp(22px, 7vw, 34px); }
+
+    /* Analytics panel: single column */
+    .analytics-grid { grid-template-columns: 1fr !important; }
+    .analytics-predictions { grid-column: auto; }
+
+    /* Zone panel: tighter padding */
+    .zone-panel-body { grid-template-columns: 1fr; }
+}
