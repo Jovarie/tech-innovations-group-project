@@ -1,6 +1,6 @@
 // src/routes/faultRoutes.js
 const express = require("express");
-const { FAULTS, updateFaultStatus, resetFaults, addNote, ALLOWED_STATUSES } = require("../models/fault");
+const { FAULTS, updateFaultStatus, resetFaults, addNote, reload, ALLOWED_STATUSES } = require("../models/fault");
 const { ZONES, RESTRICTED_PERMISSION } = require("../models/zones");
 const { authRequired } = require("../middleware/auth");
 const rbacMiddleware = require("../middleware/rbacMiddleware");
@@ -14,6 +14,7 @@ router.get(
   authRequired,
   rbacMiddleware.checkPermission("read_ar"),
   (req, res) => {
+    reload();
     res.json({ faults: Object.values(FAULTS) });
   },
 );
@@ -101,6 +102,7 @@ router.get(
   authRequired,
   rbacMiddleware.checkPermission("read_ar"),
   (req, res) => {
+    reload();
     const faults = Object.values(FAULTS);
     const now    = Date.now();
 

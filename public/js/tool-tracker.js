@@ -144,29 +144,30 @@ async function tick() {
     const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const qr  = jsQR(img.data, canvas.width, canvas.height);
 
-    if (qr && TOOLS[qr.data]) {
-      const toolId = qr.data;
-      const loc    = qr.location;
-      const pts    = [loc.topLeftCorner, loc.topRightCorner, loc.bottomRightCorner, loc.bottomLeftCorner]
-        .map((p) => videoToScreen(p, video));
-      let minX = Infinity, maxX = -Infinity, minY = Infinity;
-      pts.forEach((c) => {
-        if (c.x < minX) minX = c.x;
-        if (c.x > maxX) maxX = c.x;
-        if (c.y < minY) minY = c.y;
-      });
-      positionLabel((minX + maxX) / 2, minY);
+    if (qr) {
+      const toolId = (qr.data || "").trim().split(/[\n\r]/)[0].trim();
+      if (toolId && TOOLS[toolId]) {
+        const loc    = qr.location;
+        const pts    = [loc.topLeftCorner, loc.topRightCorner, loc.bottomRightCorner, loc.bottomLeftCorner]
+          .map((p) => videoToScreen(p, video));
+        let minX = Infinity, maxX = -Infinity, minY = Infinity;
+        pts.forEach((c) => {
+          if (c.x < minX) minX = c.x;
+          if (c.x > maxX) maxX = c.x;
+          if (c.y < minY) minY = c.y;
+        });
+        positionLabel((minX + maxX) / 2, minY);
 
-      if (currentTool !== toolId) {
-        currentTool = toolId;
-        statusEl.textContent = "TOOL DETECTED";
-        await loadSession();
-        const isOut = sessionData.some((t) => t.toolId === toolId);
-        showLabel(toolId, isOut);
-        setTimeout(() => { if (scanning) statusEl.textContent = "SCANNING…"; }, 1500);
+        if (currentTool !== toolId) {
+          currentTool = toolId;
+          statusEl.textContent = "TOOL DETECTED";
+          await loadSession();
+          const isOut = sessionData.some((t) => t.toolId === toolId);
+          showLabel(toolId, isOut);
+          setTimeout(() => { if (scanning) statusEl.textContent = "SCANNING…"; }, 1500);
+        }
       }
     }
-  }
   requestAnimationFrame(tick);
 }
 
