@@ -465,7 +465,8 @@ function initScanner() {
       const code = jsQR(imageData.data, w, h, { inversionAttempts: "dontInvert" });
 
       if (code && code.location) {
-        const id      = (code.data || "").trim();
+        const rawData = (code.data || "").trim();
+        const id      = rawData.split(/[\n\r]/)[0].trim();
         const corners = [
           code.location.topLeftCorner, code.location.topRightCorner,
           code.location.bottomRightCorner, code.location.bottomLeftCorner,
