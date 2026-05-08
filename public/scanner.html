@@ -82,8 +82,40 @@
                 <div class="dp-footer">
                     <button class="btn secondary btn-sm dp-annotate-btn" id="dp-annotate-btn">&#43;&nbsp; Add Note</button>
                     <button class="btn dp-fix-btn" id="dp-fix-btn">
-                        &#9655;&nbsp; Mark as Fixed
+                        &#9655;&nbsp; Begin Repair
                     </button>
+                </div>
+            </div>
+
+            <!-- Workflow Step 1: Scan Tools -->
+            <div id="step-tools" class="wf-step hidden">
+                <div class="wf-step-header">
+                    <div class="wf-step-label">STEP 1 OF 3 — CHECK OUT TOOLS</div>
+                    <div class="wf-fault-ctx" id="wf-tools-fault">—</div>
+                </div>
+                <p class="wf-instruction">Point camera at each tool QR code to log it for this job. All required tools must be scanned before continuing.</p>
+                <div class="wf-tool-list" id="wf-tool-list"></div>
+                <div class="wf-footer">
+                    <button class="btn secondary btn-sm" id="wf-tools-back">&#8592; Back</button>
+                    <button class="btn btn-sm" id="wf-tools-next" disabled>Proceed to Verify &#8594;</button>
+                </div>
+            </div>
+
+            <!-- Workflow Step 2: Sequential Verification -->
+            <div id="step-verify" class="wf-step hidden">
+                <div class="wf-step-header">
+                    <div class="wf-step-label">STEP 2 OF 3 — PRE-CLOSE CHECKS</div>
+                    <div class="wf-progress-row">
+                        <span id="wf-verify-count">0</span>&thinsp;/&thinsp;3
+                        <div class="wf-progress-track">
+                            <div class="wf-progress-fill" id="wf-verify-fill" style="width:0%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="wf-verify-card" id="wf-verify-card"></div>
+                <div class="wf-footer">
+                    <button class="btn secondary btn-sm" id="wf-verify-back">&#8592; Back</button>
+                    <button class="btn btn-sm" id="wf-verify-confirm">&#10003;&nbsp; Confirm Present</button>
                 </div>
             </div>
 
