@@ -2039,7 +2039,7 @@ tr.row-fixed td { opacity: 0.5; }
 }
 .detail-panel,
 .wf-step {
-    padding-bottom: calc(14px + env(safe-area-inset-bottom));
+    /* padding handled by footer child elements */
 }
 .tt-session-toggle {
     bottom: calc(24px + env(safe-area-inset-bottom));
@@ -2103,10 +2103,36 @@ tr.row-fixed td { opacity: 0.5; }
     .welcome { padding: 24px 16px 48px; }
     .welcome h1 { font-size: clamp(22px, 7vw, 34px); }
 
-    /* Analytics panel: single column */
+    /* Analytics panel: single column, constrained chart heights */
     .analytics-grid { grid-template-columns: 1fr !important; }
     .analytics-predictions { grid-column: auto; }
+    .analytics-panel { padding: 16px; }
+    .analytics-panel-title { margin-bottom: 14px; }
+    #chart-status,
+    #chart-priority { max-height: 220px; width: 100% !important; }
+    .analytics-chart-wrap { align-items: center; }
+
+    /* Prediction rows: stack label below bar on narrow screens */
+    .prediction-row {
+        grid-template-columns: 60px 1fr;
+        grid-template-rows: auto auto;
+        row-gap: 4px;
+    }
+    .prediction-bar-wrap { grid-column: 1 / -1; }
+    .prediction-label { grid-column: 1 / -1; text-align: left; }
 
     /* Zone panel: tighter padding */
     .zone-panel-body { grid-template-columns: 1fr; }
+
+    /* Workflow footer: extra bottom clearance for Safari browser chrome */
+    .wf-footer {
+        padding-bottom: max(env(safe-area-inset-bottom) + 16px, 60px);
+    }
+    .dp-footer {
+        padding-bottom: max(env(safe-area-inset-bottom) + 16px, 60px);
+    }
+
+    /* Reduce wf-step max-height so footer is never hidden */
+    .wf-step { max-height: 70dvh; max-height: 70vh; }
+    .detail-panel { max-height: 72dvh; max-height: 72vh; }
 }
