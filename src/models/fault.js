@@ -1,58 +1,87 @@
 const fs   = require("fs");
 const path = require("path");
 
-const SEED_FILE = path.join(__dirname, "../../data/faults.seed.json");
-// /tmp is writable on Vercel serverless; project data dir is read-only
-const DATA_FILE = process.env.VERCEL
-  ? "/tmp/faults.json"
-  : path.join(__dirname, "../../data/faults.json");
+const SEED_FILE   = path.join(__dirname, "../../data/faults.seed.json");
+const LOCAL_FILE  = path.join(__dirname, "../../data/faults.json");
+const REDIS_URL   = process.env.UPSTASH_REDIS_REST_URL;
+const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+const REDIS_KEY   = "ar:faults";
 
-function load() {
-  try {
-    return JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
-  } catch {
-    return JSON.parse(fs.readFileSync(SEED_FILE, "utf8"));
+// ─── Redis helpers (Upstash REST API — shared across all Vercel instances) ───
+
+async function redisGet(key) {
+  const r = await fetch(`${REDIS_URL}/get/${encodeURIComponent(key)}`, {
+    headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
+  });
+  const { result } = await r.json();
+  return result ? JSON.parse(result) : null;
+}
+
+async function redisSet(key, value) {
+  await fetch(`${REDIS_URL}/set/${encodeURIComponent(key)}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${REDIS_TOKEN}`, "Content-Type": "application/json" },
+    body: JSON.stringify([JSON.stringify(value)]),
+  });
+}
+
+// ─── File fallback (local dev) ───────────────────────────────────────────────
+
+function loadFile() {
+  try { return JSON.parse(fs.readFileSync(LOCAL_FILE, "utf8")); } catch {}
+  return JSON.parse(fs.readFileSync(SEED_FILE, "utf8"));
+}
+
+function saveFile(faults) {
+  try { fs.writeFileSync(LOCAL_FILE, JSON.stringify(faults, null, 2)); } catch {}
+}
+
+// ─── Public async API ────────────────────────────────────────────────────────
+
+async function getFaults() {
+  if (REDIS_URL) {
+    const data = await redisGet(REDIS_KEY);
+    if (data) return data;
+    // First time — seed Redis from bundled JSON
+    const seed = JSON.parse(fs.readFileSync(SEED_FILE, "utf8"));
+    await redisSet(REDIS_KEY, seed);
+    return seed;
   }
+  return loadFile();
 }
 
-function save(faults) {
-  try { fs.writeFileSync(DATA_FILE, JSON.stringify(faults, null, 2)); } catch { /* ignore */ }
-}
-
-// Live reference — mutated in place so existing imports stay valid
-const FAULTS = load();
-
-// Re-sync FAULTS from disk (call at the start of read routes so /tmp writes are reflected)
-function reload() {
-  const fresh = load();
-  Object.keys(FAULTS).forEach((k) => delete FAULTS[k]);
-  Object.assign(FAULTS, fresh);
+async function putFaults(faults) {
+  if (REDIS_URL) {
+    await redisSet(REDIS_KEY, faults);
+  } else {
+    saveFile(faults);
+  }
 }
 
 const ALLOWED_STATUSES = ["OPEN", "IN PROGRESS", "FIXED"];
 
-function updateFaultStatus(id, status) {
-  if (!FAULTS[id]) return null;
+async function updateFaultStatus(id, status) {
+  const faults = await getFaults();
+  if (!faults[id]) return null;
   if (!ALLOWED_STATUSES.includes(status)) return undefined;
-  FAULTS[id] = { ...FAULTS[id], status, updatedAt: new Date().toISOString() };
-  save(FAULTS);
-  return FAULTS[id];
+  faults[id] = { ...faults[id], status, updatedAt: new Date().toISOString() };
+  await putFaults(faults);
+  return faults[id];
 }
 
-function resetFaults() {
+async function resetFaults() {
   const seed = JSON.parse(fs.readFileSync(SEED_FILE, "utf8"));
-  Object.keys(FAULTS).forEach((k) => delete FAULTS[k]);
-  Object.assign(FAULTS, seed);
-  save(FAULTS);
-  return FAULTS;
+  await putFaults(seed);
+  return seed;
 }
 
-function addNote(id, text, author) {
-  if (!FAULTS[id]) return null;
+async function addNote(id, text, author) {
+  const faults = await getFaults();
+  if (!faults[id]) return null;
   const note = { text, author, timestamp: new Date().toISOString() };
-  FAULTS[id].notes = [...(FAULTS[id].notes || []), note];
-  save(FAULTS);
-  return FAULTS[id];
+  faults[id].notes = [...(faults[id].notes || []), note];
+  await putFaults(faults);
+  return faults[id];
 }
 
-module.exports = { FAULTS, updateFaultStatus, resetFaults, addNote, reload, ALLOWED_STATUSES };
+module.exports = { getFaults, updateFaultStatus, resetFaults, addNote, ALLOWED_STATUSES };

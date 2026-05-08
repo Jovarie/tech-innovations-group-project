@@ -1,21 +1,54 @@
 const express = require("express");
 const crypto  = require("crypto");
 const fs      = require("fs");
+const path    = require("path");
 const { authRequired } = require("../middleware/auth");
 const rbacMiddleware   = require("../middleware/rbacMiddleware");
 
 const router = express.Router();
 
-const SESSION_FILE  = process.env.VERCEL ? "/tmp/tool-session.json"  : null;
-const HISTORY_FILE  = process.env.VERCEL ? "/tmp/tool-history.json"  : null;
+const REDIS_URL   = process.env.UPSTASH_REDIS_REST_URL;
+const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+const SESSION_KEY = "ar:tool-session";
+const HISTORY_KEY = "ar:tool-history";
 
-function readJson(file, fallback) {
-  if (!file) return fallback;
-  try { return JSON.parse(fs.readFileSync(file, "utf8")); } catch { return fallback; }
+const LOCAL_SESSION = path.join(__dirname, "../../data/tool-session.json");
+const LOCAL_HISTORY = path.join(__dirname, "../../data/tool-history.json");
+
+async function redisGet(key) {
+  const r = await fetch(`${REDIS_URL}/get/${encodeURIComponent(key)}`, {
+    headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
+  });
+  const { result } = await r.json();
+  return result ? JSON.parse(result) : null;
 }
-function writeJson(file, data) {
-  if (!file) return;
-  try { fs.writeFileSync(file, JSON.stringify(data)); } catch { /* ignore */ }
+
+async function redisSet(key, value) {
+  await fetch(`${REDIS_URL}/set/${encodeURIComponent(key)}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${REDIS_TOKEN}`, "Content-Type": "application/json" },
+    body: JSON.stringify([JSON.stringify(value)]),
+  });
+}
+
+async function getSession() {
+  if (REDIS_URL) return (await redisGet(SESSION_KEY)) || [];
+  try { return JSON.parse(fs.readFileSync(LOCAL_SESSION, "utf8")); } catch { return []; }
+}
+
+async function putSession(data) {
+  if (REDIS_URL) { await redisSet(SESSION_KEY, data); return; }
+  try { fs.writeFileSync(LOCAL_SESSION, JSON.stringify(data)); } catch {}
+}
+
+async function getHistory() {
+  if (REDIS_URL) return (await redisGet(HISTORY_KEY)) || [];
+  try { return JSON.parse(fs.readFileSync(LOCAL_HISTORY, "utf8")); } catch { return []; }
+}
+
+async function putHistory(data) {
+  if (REDIS_URL) { await redisSet(HISTORY_KEY, data); return; }
+  try { fs.writeFileSync(LOCAL_HISTORY, JSON.stringify(data)); } catch {}
 }
 
 const TOOLS = {
@@ -28,23 +61,22 @@ const TOOLS = {
   "TOOL-GAUGE-05":   { id: "TOOL-GAUGE-05",   name: "Crack Gauge",       type: "hand"       },
 };
 
-// Session arrays — written to /tmp on Vercel so same-instance requests stay in sync
-let activeCheckouts = readJson(SESSION_FILE, []);
-let toolHistory     = readJson(HISTORY_FILE, []);
-
 // GET /api/tools/session — current checkouts + full tool list
 router.get(
   "/tools/session",
   authRequired,
   rbacMiddleware.checkPermission("read_ar"),
-  (req, res) => {
-    activeCheckouts = readJson(SESSION_FILE, activeCheckouts);
-    toolHistory     = readJson(HISTORY_FILE, toolHistory);
-    const detailed = activeCheckouts.map((t) => ({
-      ...t,
-      toolDetails: TOOLS[t.toolId] || null,
-    }));
-    res.json({ activeTools: detailed, allTools: Object.values(TOOLS) });
+  async (req, res) => {
+    try {
+      const activeCheckouts = await getSession();
+      const detailed = activeCheckouts.map((t) => ({
+        ...t,
+        toolDetails: TOOLS[t.toolId] || null,
+      }));
+      res.json({ activeTools: detailed, allTools: Object.values(TOOLS) });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to load tool session" });
+    }
   },
 );
 
@@ -53,35 +85,41 @@ router.post(
   "/tools/checkout",
   authRequired,
   rbacMiddleware.checkPermission("execute_ar"),
-  (req, res) => {
+  async (req, res) => {
     const { toolId, faultId } = req.body || {};
     const tool = TOOLS[toolId];
     if (!tool) return res.status(404).json({ error: "Tool not found" });
-    if (activeCheckouts.find((t) => t.toolId === toolId)) {
-      return res.status(409).json({ error: "Tool already checked out" });
+
+    try {
+      const activeCheckouts = await getSession();
+      if (activeCheckouts.find((t) => t.toolId === toolId)) {
+        return res.status(409).json({ error: "Tool already checked out" });
+      }
+
+      const entry = {
+        toolId,
+        checkedOutBy: req.user.username,
+        checkedOutAt: new Date().toISOString(),
+        faultId: faultId || null,
+      };
+      activeCheckouts.push(entry);
+
+      const history = await getHistory();
+      history.push({
+        id:        crypto.randomUUID(),
+        toolId,
+        toolName:  tool.name,
+        action:    "CHECKOUT",
+        user:      req.user.username,
+        faultId:   faultId || null,
+        timestamp: new Date().toISOString(),
+      });
+
+      await Promise.all([putSession(activeCheckouts), putHistory(history)]);
+      res.json({ success: true, checkout: entry });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to checkout tool" });
     }
-
-    const entry = {
-      toolId,
-      checkedOutBy: req.user.username,
-      checkedOutAt: new Date().toISOString(),
-      faultId: faultId || null,
-    };
-    activeCheckouts.push(entry);
-
-    toolHistory.push({
-      id:        crypto.randomUUID(),
-      toolId,
-      toolName:  tool.name,
-      action:    "CHECKOUT",
-      user:      req.user.username,
-      faultId:   faultId || null,
-      timestamp: new Date().toISOString(),
-    });
-
-    writeJson(SESSION_FILE, activeCheckouts);
-    writeJson(HISTORY_FILE, toolHistory);
-    res.json({ success: true, checkout: entry });
   },
 );
 
@@ -90,27 +128,32 @@ router.post(
   "/tools/checkin",
   authRequired,
   rbacMiddleware.checkPermission("execute_ar"),
-  (req, res) => {
+  async (req, res) => {
     const { toolId } = req.body || {};
-    const idx = activeCheckouts.findIndex((t) => t.toolId === toolId);
-    if (idx === -1) return res.status(404).json({ error: "Tool not checked out" });
 
-    const [checkout] = activeCheckouts.splice(idx, 1);
-    const tool = TOOLS[toolId];
+    try {
+      const activeCheckouts = await getSession();
+      const idx = activeCheckouts.findIndex((t) => t.toolId === toolId);
+      if (idx === -1) return res.status(404).json({ error: "Tool not checked out" });
 
-    toolHistory.push({
-      id:        crypto.randomUUID(),
-      toolId,
-      toolName:  tool ? tool.name : toolId,
-      action:    "CHECKIN",
-      user:      req.user.username,
-      faultId:   checkout.faultId || null,
-      timestamp: new Date().toISOString(),
-    });
+      const [checkout] = activeCheckouts.splice(idx, 1);
 
-    writeJson(SESSION_FILE, activeCheckouts);
-    writeJson(HISTORY_FILE, toolHistory);
-    res.json({ success: true });
+      const history = await getHistory();
+      history.push({
+        id:        crypto.randomUUID(),
+        toolId,
+        toolName:  TOOLS[toolId] ? TOOLS[toolId].name : toolId,
+        action:    "CHECKIN",
+        user:      req.user.username,
+        faultId:   checkout.faultId || null,
+        timestamp: new Date().toISOString(),
+      });
+
+      await Promise.all([putSession(activeCheckouts), putHistory(history)]);
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to checkin tool" });
+    }
   },
 );
 
@@ -119,9 +162,13 @@ router.get(
   "/tools/history",
   authRequired,
   rbacMiddleware.checkPermission("read_ar"),
-  (req, res) => {
-    toolHistory = readJson(HISTORY_FILE, toolHistory);
-    res.json({ history: toolHistory.slice(-100).reverse() });
+  async (req, res) => {
+    try {
+      const history = await getHistory();
+      res.json({ history: history.slice(-100).reverse() });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to load tool history" });
+    }
   },
 );
 

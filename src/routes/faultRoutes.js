@@ -1,6 +1,6 @@
 // src/routes/faultRoutes.js
 const express = require("express");
-const { FAULTS, updateFaultStatus, resetFaults, addNote, reload, ALLOWED_STATUSES } = require("../models/fault");
+const { getFaults, updateFaultStatus, resetFaults, addNote, ALLOWED_STATUSES } = require("../models/fault");
 const { ZONES, RESTRICTED_PERMISSION } = require("../models/zones");
 const { authRequired } = require("../middleware/auth");
 const rbacMiddleware = require("../middleware/rbacMiddleware");
@@ -13,9 +13,13 @@ router.get(
   "/faults",
   authRequired,
   rbacMiddleware.checkPermission("read_ar"),
-  (req, res) => {
-    reload();
-    res.json({ faults: Object.values(FAULTS) });
+  async (req, res) => {
+    try {
+      const faults = await getFaults();
+      res.json({ faults: Object.values(faults) });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to load faults" });
+    }
   },
 );
 
@@ -24,10 +28,15 @@ router.get(
   "/faults/:id",
   authRequired,
   rbacMiddleware.checkPermission("read_ar"),
-  (req, res) => {
-    const fault = FAULTS[req.params.id];
-    if (!fault) return res.status(404).json({ error: "Fault not found" });
-    res.json(fault);
+  async (req, res) => {
+    try {
+      const faults = await getFaults();
+      const fault = faults[req.params.id];
+      if (!fault) return res.status(404).json({ error: "Fault not found" });
+      res.json(fault);
+    } catch (err) {
+      res.status(500).json({ error: "Failed to load fault" });
+    }
   },
 );
 
@@ -36,14 +45,18 @@ router.patch(
   "/faults/:id/status",
   authRequired,
   rbacMiddleware.checkPermission("execute_ar"),
-  (req, res) => {
+  async (req, res) => {
     const { status } = req.body || {};
     if (!status || !ALLOWED_STATUSES.includes(status)) {
       return res.status(400).json({ error: `status must be one of: ${ALLOWED_STATUSES.join(", ")}` });
     }
-    const fault = updateFaultStatus(req.params.id, status);
-    if (fault === null) return res.status(404).json({ error: "Fault not found" });
-    res.json(fault);
+    try {
+      const fault = await updateFaultStatus(req.params.id, status);
+      if (fault === null) return res.status(404).json({ error: "Fault not found" });
+      res.json(fault);
+    } catch (err) {
+      res.status(500).json({ error: "Failed to update fault" });
+    }
   },
 );
 
@@ -52,14 +65,18 @@ router.post(
   "/faults/:id/notes",
   authRequired,
   rbacMiddleware.checkPermission("execute_ar"),
-  (req, res) => {
+  async (req, res) => {
     const { text, author } = req.body || {};
     if (!text || typeof text !== "string" || !text.trim()) {
       return res.status(400).json({ error: "note text is required" });
     }
-    const fault = addNote(req.params.id, text.trim(), (author || "engineer").trim());
-    if (fault === null) return res.status(404).json({ error: "Fault not found" });
-    res.json(fault);
+    try {
+      const fault = await addNote(req.params.id, text.trim(), (author || "engineer").trim());
+      if (fault === null) return res.status(404).json({ error: "Fault not found" });
+      res.json(fault);
+    } catch (err) {
+      res.status(500).json({ error: "Failed to add note" });
+    }
   },
 );
 
@@ -68,8 +85,13 @@ router.post(
   "/faults/reset",
   authRequired,
   rbacMiddleware.checkPermission("execute_ar"),
-  (req, res) => {
-    res.json({ faults: Object.values(resetFaults()) });
+  async (req, res) => {
+    try {
+      const faults = await resetFaults();
+      res.json({ faults: Object.values(faults) });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to reset faults" });
+    }
   },
 );
 
@@ -101,52 +123,56 @@ router.get(
   "/analytics",
   authRequired,
   rbacMiddleware.checkPermission("read_ar"),
-  (req, res) => {
-    reload();
-    const faults = Object.values(FAULTS);
-    const now    = Date.now();
+  async (req, res) => {
+    try {
+      const faultsMap = await getFaults();
+      const faults = Object.values(faultsMap);
+      const now    = Date.now();
 
-    // Resolution time targets in days by priority (rule-based predictive model)
-    const TARGET_DAYS = { CRITICAL: 2, HIGH: 5, MEDIUM: 14, LOW: 30 };
+      // Resolution time targets in days by priority (rule-based predictive model)
+      const TARGET_DAYS = { CRITICAL: 2, HIGH: 5, MEDIUM: 14, LOW: 30 };
 
-    const byStatus   = { OPEN: 0, "IN PROGRESS": 0, FIXED: 0 };
-    const byPriority = { CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0 };
-    const predictions = [];
+      const byStatus   = { OPEN: 0, "IN PROGRESS": 0, FIXED: 0 };
+      const byPriority = { CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0 };
+      const predictions = [];
 
-    faults.forEach((f) => {
-      if (byStatus[f.status]   !== undefined) byStatus[f.status]++;
-      if (byPriority[f.priority] !== undefined) byPriority[f.priority]++;
+      faults.forEach((f) => {
+        if (byStatus[f.status]     !== undefined) byStatus[f.status]++;
+        if (byPriority[f.priority] !== undefined) byPriority[f.priority]++;
 
-      if (f.status !== "FIXED") {
-        const ageMs       = now - new Date(f.reportedAt).getTime();
-        const ageDays     = ageMs / 86400000;
-        const targetDays  = TARGET_DAYS[f.priority] || 14;
-        const daysLeft    = Math.max(0, targetDays - ageDays);
-        const overdue     = ageDays > targetDays;
-        const riskScore   = Math.min(100, Math.round((ageDays / targetDays) * 100));
+        if (f.status !== "FIXED") {
+          const ageMs      = now - new Date(f.reportedAt).getTime();
+          const ageDays    = ageMs / 86400000;
+          const targetDays = TARGET_DAYS[f.priority] || 14;
+          const daysLeft   = Math.max(0, targetDays - ageDays);
+          const overdue    = ageDays > targetDays;
+          const riskScore  = Math.min(100, Math.round((ageDays / targetDays) * 100));
 
-        predictions.push({
-          id:          f.id,
-          title:       f.title,
-          priority:    f.priority,
-          status:      f.status,
-          ageDays:     Math.round(ageDays * 10) / 10,
-          targetDays,
-          daysLeft:    Math.round(daysLeft * 10) / 10,
-          overdue,
-          riskScore,
-        });
-      }
-    });
+          predictions.push({
+            id:        f.id,
+            title:     f.title,
+            priority:  f.priority,
+            status:    f.status,
+            ageDays:   Math.round(ageDays * 10) / 10,
+            targetDays,
+            daysLeft:  Math.round(daysLeft * 10) / 10,
+            overdue,
+            riskScore,
+          });
+        }
+      });
 
-    predictions.sort((a, b) => b.riskScore - a.riskScore);
+      predictions.sort((a, b) => b.riskScore - a.riskScore);
 
-    res.json({
-      byStatus,
-      byPriority,
-      totalNotes:   faults.reduce((n, f) => n + (f.notes ? f.notes.length : 0), 0),
-      predictions,
-    });
+      res.json({
+        byStatus,
+        byPriority,
+        totalNotes:   faults.reduce((n, f) => n + (f.notes ? f.notes.length : 0), 0),
+        predictions,
+      });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to load analytics" });
+    }
   },
 );
 
