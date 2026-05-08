@@ -10,8 +10,10 @@ if (Auth.requireAuth()) {
   loadDashboard();
   loadZones();
   loadAnalytics();
-  setInterval(loadDashboard,   5000);
-  setInterval(loadAnalytics,  10000);
+  loadToolSession();
+  setInterval(loadDashboard,    5000);
+  setInterval(loadAnalytics,   10000);
+  setInterval(loadToolSession, 15000);
 
   const resetBtn = document.getElementById("reset-faults-btn");
   if (resetBtn) {
@@ -20,7 +22,10 @@ if (Auth.requireAuth()) {
       resetBtn.textContent = "Resetting...";
       try {
         const res = await Auth.fetch("/api/faults/reset", { method: "POST" });
-        if (!res.ok) throw new Error("Reset failed");
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error || `Server error ${res.status}`);
+        }
         await loadDashboard();
         await loadAnalytics();
       } catch (err) {
@@ -233,6 +238,50 @@ function renderPredictions(predictions) {
       <div class="prediction-label ${riskClass}">${label}</div>
     </div>`;
   }).join("");
+}
+
+// ─── Tool session panel ──────────────────────────────────────────────────────
+
+const REQUIRED_TOOLS = ["TOOL-WRENCH-01", "TOOL-MULTI-02", "TOOL-THERMAL-04"];
+
+async function loadToolSession() {
+  const body    = document.getElementById("tool-alert-body");
+  const iconEl  = document.getElementById("tool-alert-icon");
+  try {
+    const res = await Auth.fetch("/api/tools/session");
+    if (!res.ok) throw new Error("unavailable");
+    const { activeTools, allTools } = await res.json();
+
+    if (!activeTools.length) {
+      body.innerHTML = '<div class="empty-state">No tools currently checked out.</div>';
+      iconEl.textContent = "&#128295;";
+      return;
+    }
+
+    const now = Date.now();
+    let hasAlert = false;
+    body.innerHTML = activeTools.map((t) => {
+      const info    = (allTools || []).find((a) => a.id === t.toolId) || {};
+      const name    = info.name || t.toolId;
+      const elapsed = Math.round((now - new Date(t.checkedOutAt).getTime()) / 60000);
+      const overdue = info.required && elapsed > 120;
+      if (overdue) hasAlert = true;
+      return `<div class="tool-session-row${overdue ? " tool-session-alert" : ""}">
+        <div class="tool-session-info">
+          <span class="tool-session-name">${escapeHtml(name)}</span>
+          ${t.faultId ? `<span class="tool-session-fault">&#128279;&nbsp;${escapeHtml(t.faultId)}</span>` : ""}
+        </div>
+        <div class="tool-session-right">
+          <span class="tool-session-time${overdue ? " tool-time-alert" : ""}">${elapsed}m out</span>
+          ${overdue ? `<span class="badge critical" style="font-size:9px;">OVERDUE</span>` : ""}
+        </div>
+      </div>`;
+    }).join("");
+
+    iconEl.textContent = hasAlert ? "⚠️" : "&#128295;";
+  } catch (_) {
+    body.innerHTML = '<div class="empty-state">Tool session unavailable.</div>';
+  }
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

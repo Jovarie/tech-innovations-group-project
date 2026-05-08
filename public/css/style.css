@@ -1570,3 +1570,188 @@ tr.row-fixed td { opacity: 0.5; }
     vertical-align: middle;
     opacity: 0.8;
 }
+
+/* ─── Tool Tracker ─────────────────────────────────────────────────────────── */
+
+/* Session toggle button (floating bottom-right in scanner view) */
+.tt-session-toggle {
+    position: fixed;
+    bottom: 24px;
+    right: 20px;
+    z-index: 30;
+    background: var(--hud-bg);
+    border: 1px solid var(--hud-color);
+    color: var(--hud-color);
+    font-family: inherit;
+    font-size: 11px;
+    letter-spacing: 2px;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+}
+.tt-session-toggle:hover {
+    background: rgba(0, 240, 255, 0.12);
+}
+
+/* Side panel */
+.tt-session-panel {
+    position: fixed;
+    bottom: 70px;
+    right: 16px;
+    z-index: 30;
+    width: 300px;
+    max-height: 70vh;
+    overflow-y: auto;
+    background: rgba(2, 12, 20, 0.95);
+    border: 1px solid var(--hud-color);
+    border-radius: 6px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
+}
+.tt-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(0, 240, 255, 0.15);
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--hud-color);
+}
+.tt-panel-close {
+    background: none;
+    border: none;
+    color: var(--hud-color-dim);
+    font-size: 14px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+}
+.tt-session-list {
+    padding: 8px 0;
+}
+.tt-panel-footer {
+    padding: 8px 14px;
+    border-top: 1px solid rgba(0, 240, 255, 0.1);
+    text-align: center;
+}
+.tt-panel-footer a {
+    color: var(--hud-color-dim);
+    font-size: 10px;
+    letter-spacing: 1px;
+}
+
+/* Tool rows in session panel */
+.tt-tool-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 14px;
+    border-bottom: 1px solid rgba(0, 240, 255, 0.07);
+    gap: 8px;
+}
+.tt-tool-row:last-child { border-bottom: none; }
+.tt-tool-row.tt-tool-overdue {
+    border-left: 3px solid var(--crit);
+    background: rgba(255, 77, 109, 0.06);
+}
+.tt-tool-info  { flex: 1; min-width: 0; }
+.tt-tool-name  { font-size: 12px; color: #cdeaf0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tt-tool-meta  { font-size: 10px; color: var(--hud-color-dim); margin-top: 2px; }
+
+/* Fault link input in AR label */
+.tt-fault-input {
+    width: 100%;
+    background: rgba(0, 20, 30, 0.9);
+    border: 1px solid var(--hud-color);
+    color: #eafcff;
+    font-family: inherit;
+    font-size: 12px;
+    padding: 7px 10px;
+    border-radius: 3px;
+    outline: none;
+}
+.tt-fault-input::placeholder { color: var(--hud-color-dim); }
+
+/* History section in session panel */
+.tt-history-title {
+    padding: 8px 14px 4px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--hud-color-dim);
+    border-top: 1px solid rgba(0, 240, 255, 0.1);
+}
+.tt-history-list { padding-bottom: 6px; }
+.tt-hist-row {
+    display: flex;
+    flex-direction: column;
+    padding: 6px 14px;
+    border-bottom: 1px solid rgba(0, 240, 255, 0.06);
+    gap: 2px;
+}
+.tt-hist-action {
+    font-size: 9px;
+    letter-spacing: 2px;
+    font-weight: bold;
+}
+.tt-hist-out  { color: var(--warn); }
+.tt-hist-in   { color: var(--ok); }
+.tt-hist-name { font-size: 11px; color: #cdeaf0; }
+.tt-hist-meta { font-size: 10px; color: var(--hud-color-dim); }
+
+/* ─── Dashboard: Tool Alert Panel ─────────────────────────────────────────── */
+
+.tool-alert-panel {
+    background: rgba(0, 240, 255, 0.03);
+    border: 1px solid rgba(0, 240, 255, 0.18);
+    border-radius: 8px;
+    margin-bottom: 28px;
+}
+.tool-alert-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    border-bottom: 1px solid rgba(0, 240, 255, 0.12);
+}
+.tool-alert-title {
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: var(--hud-color);
+}
+.tool-alert-link {
+    font-size: 11px;
+    color: var(--hud-color-dim);
+    letter-spacing: 1px;
+}
+.tool-alert-link:hover { color: var(--hud-color); }
+.tool-alert-body {
+    padding: 12px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.tool-session-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0, 240, 255, 0.05);
+    border: 1px solid rgba(0, 240, 255, 0.12);
+    border-radius: 5px;
+    padding: 10px 14px;
+    flex: 1 1 220px;
+    gap: 10px;
+}
+.tool-session-row.tool-session-alert {
+    border-color: rgba(255, 77, 109, 0.5);
+    background: rgba(255, 77, 109, 0.07);
+}
+.tool-session-info  { flex: 1; min-width: 0; }
+.tool-session-name  { font-size: 12px; color: #cdeaf0; display: block; }
+.tool-session-fault { font-size: 10px; color: var(--hud-color); margin-top: 3px; display: block; }
+.tool-session-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+.tool-session-time  { font-size: 11px; color: var(--hud-color-dim); }
+.tool-time-alert    { color: var(--crit); }
