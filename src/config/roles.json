@@ -18,6 +18,7 @@
         "execute_ar",
         "create_record",
         "edit_record",
+        "read_record",
         "read_infastructure_data",
         "write_infastructure_data"
       ]
@@ -29,10 +30,12 @@
         "write_ar",
         "execute_ar",
         "create_record",
+        "read_record",
+        "read_infastructure_data",
         "create_admin",
         "read_admin",
         "update_admin",
-        "delete_damin"    
+        "delete_admin"
       ]
     },
     {
@@ -40,7 +43,8 @@
       "permissions": [
         "read_ar",
         "read_record",
-        "read_admin"
+        "read_admin",
+        "read_infastructure_data"
       ]
     }   
   ]

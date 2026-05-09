@@ -2,6 +2,7 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const rateLimit = require("express-rate-limit");
 
 const { JWT_SECRET, TOKEN_TTL } = require("../config");
 const { USERS } = require("../models/user");
@@ -9,7 +10,15 @@ const { validateLoginInput } = require("../middleware/validation");
 
 const router = express.Router();
 
-router.post("/login", validateLoginInput, async (req, res, next) => {
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 8,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many login attempts, please try again in 15 minutes." },
+});
+
+router.post("/login", loginLimiter, validateLoginInput, async (req, res, next) => {
   const { username, password } = req.body || {};
 
   try {

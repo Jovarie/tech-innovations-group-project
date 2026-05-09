@@ -8,6 +8,24 @@ const USERS = [
     role: 'senior engineer',
     passwordHash: bcrypt.hashSync('maintain123', 10),
   },
+  {
+    id: 'u-002',
+    username: 'junior',
+    role: 'junior technician',
+    passwordHash: bcrypt.hashSync('tech123', 10),
+  },
+  {
+    id: 'u-003',
+    username: 'secadmin',
+    role: 'security admin',
+    passwordHash: bcrypt.hashSync('admin123', 10),
+  },
+  {
+    id: 'u-004',
+    username: 'auditor',
+    role: 'system auditor',
+    passwordHash: bcrypt.hashSync('audit123', 10),
+  },
 ];
 
 function getUserByUsername(username) {
