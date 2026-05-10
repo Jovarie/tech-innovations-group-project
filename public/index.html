@@ -21,7 +21,7 @@
                 </button>
                 <div class="nav-links" id="nav-links">
                     <a href="/" class="active">Home</a>
-                    <a href="/scanner.html">Scanner</a>
+                    <a href="/scanner.html">Fault Scanner</a>
                     <a href="/tool-tracker.html">Tools</a>
                     <a href="/dashboard.html">Dashboard</a>
                     <span data-user-widget></span>
@@ -116,14 +116,21 @@
         </main>
 
         <script src="/js/auth.js"></script>
-        <script>
-            // Already logged in — go straight to dashboard
-            document.addEventListener("DOMContentLoaded", () => {
-                if (Auth.isLoggedIn()) {
-                    window.location.replace("/dashboard.html");
-                }
-            });
-        </script>
+<script>
+    // Show home page, update button based on login status (NO auto-redirect)
+    document.addEventListener("DOMContentLoaded", () => {
+        const loginCta = document.getElementById("login-cta");
+        if (Auth.isLoggedIn()) {
+            // User is logged in - change button to go to dashboard
+            loginCta.textContent = "▶ Go to Dashboard";
+            loginCta.href = "/dashboard.html";
+        } else {
+            // User not logged in - keep as Sign In
+            loginCta.textContent = "▶ Sign In";
+            loginCta.href = "/login.html";
+        }
+    });
+</script>
         <script>
             (function(){var b=document.getElementById('nav-hamburger'),l=document.getElementById('nav-links');if(!b)return;b.addEventListener('click',function(e){e.stopPropagation();l.classList.toggle('open');});document.addEventListener('click',function(){l.classList.remove('open');});})();
         </script>

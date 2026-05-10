@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>AR Maintenance // Fault QR Codes</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background: #f4f4f4;
+                padding: 24px;
+                text-align: center;
+            }
+            h1 {
+                font-size: 22px;
+                margin-bottom: 6px;
+            }
+            p {
+                color: #555;
+                margin-bottom: 24px;
+            }
+            .grid {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 32px;
+                justify-content: center;
+            }
+            .card {
+                background: #fff;
+                border: 1px solid #ddd;
+                border-radius: 10px;
+                padding: 24px 20px 16px;
+                text-align: center;
+                width: 180px;
+            }
+            .card canvas {
+                display: block;
+                margin: 0 auto;
+            }
+            .card .fault-id {
+                font-size: 11px;
+                color: #888;
+                margin-top: 10px;
+                font-family: monospace;
+            }
+            .card .fault-name {
+                font-size: 14px;
+                font-weight: bold;
+                margin-top: 4px;
+            }
+            .card .fault-badge {
+                display: inline-block;
+                margin-top: 8px;
+                font-size: 10px;
+                padding: 2px 8px;
+                border-radius: 20px;
+                background: #fee2e2;
+                color: #b91c1c;
+            }
+            .card .fault-badge.medium {
+                background: #fff3e3;
+                color: #b45309;
+            }
+            .card .fault-location {
+                font-size: 9px;
+                color: #666;
+                margin-top: 6px;
+                font-style: italic;
+            }
+            @media print {
+                button {
+                    display: none;
+                }
+                body {
+                    background: #fff;
+                    padding: 8px;
+                }
+            }
+            .print-btn {
+                display: inline-block;
+                margin-bottom: 28px;
+                padding: 10px 24px;
+                background: #0d1117;
+                color: #fff;
+                border: none;
+                border-radius: 6px;
+                font-size: 14px;
+                cursor: pointer;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>AR Fault Detection &mdash; QR Markers</h1>
+        <p>
+            Print this page, cut out each card, and tape it to the corresponding
+            fault location (wall, tunnel, service panel).<br />
+            The AR scanner will detect these codes and overlay repair instructions.
+        </p>
+        <button class="print-btn" onclick="window.print()">
+            &#128438;&nbsp; Print / Save as PDF
+        </button>
+        <div class="grid" id="grid"></div>
+
+        <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+        <script>
+            // YOUR 3 FAULT QR CODES - replace IDs with your actual values if different
+            const FAULTS = [
+                { id: "FAULT-101", name: "Rail Head Crack", severity: "high", location: "Victoria Line, tunnel 4B" },
+                { id: "FAULT-102", name: "Signal Intermittent Fault", severity: "medium", location: "Clapham Junction relay room" },
+                { id: "FAULT-103", name: "HV Cable Insulation Wear", severity: "high", location: "Depot feeder pillar 7A" }
+            ];
+
+            const grid = document.getElementById("grid");
+            FAULTS.forEach((fault) => {
+                const card = document.createElement("div");
+                card.className = "card";
+
+                const qrWrap = document.createElement("div");
+                new QRCode(qrWrap, { 
+                    text: fault.id, 
+                    width: 140, 
+                    height: 140, 
+                    correctLevel: QRCode.CorrectLevel.M 
+                });
+
+                const idEl = document.createElement("div");
+                idEl.className = "fault-id";
+                idEl.textContent = fault.id;
+
+                const nameEl = document.createElement("div");
+                nameEl.className = "fault-name";
+                nameEl.textContent = fault.name;
+
+                const badgeEl = document.createElement("div");
+                badgeEl.className = "fault-badge" + (fault.severity === "medium" ? " medium" : "");
+                badgeEl.textContent = fault.severity === "high" ? "⚠️ HIGH SEVERITY" : "⚠️ MEDIUM SEVERITY";
+
+                const locationEl = document.createElement("div");
+                locationEl.className = "fault-location";
+                locationEl.textContent = "📍 " + fault.location;
+
+                card.appendChild(qrWrap);
+                card.appendChild(idEl);
+                card.appendChild(nameEl);
+                card.appendChild(badgeEl);
+                card.appendChild(locationEl);
+                grid.appendChild(card);
+            });
+        </script>
+    </body>
+</html>

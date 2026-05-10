@@ -133,6 +133,7 @@ async function startCamera() {
   }
 }
 
+// FIXED: Added missing opening brace { here
 async function tick() {
   if (!scanning) return;
   if (video.readyState === video.HAVE_ENOUGH_DATA) {
@@ -168,6 +169,7 @@ async function tick() {
         }
       }
     }
+  }
   requestAnimationFrame(tick);
 }
 
