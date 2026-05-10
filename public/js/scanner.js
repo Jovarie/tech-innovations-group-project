@@ -6,6 +6,30 @@
 //   Step 3 — PATCH fault to FIXED, redirect to dashboard
 // SWE-04: Add Note submits annotations to POST /api/faults/:id/notes.
 
+// Add this function to your scanner.js
+async function markFaultAsFixed(faultId) {
+  const now = new Date();
+  const fixedAt = now.toISOString();
+  
+  try {
+    const res = await Auth.fetch(`/api/faults/${faultId}/fix`, {
+      method: "PATCH",
+      body: JSON.stringify({ 
+        status: "FIXED",
+        fixedAt: fixedAt
+      }),
+    });
+    
+    if (res.ok) {
+      // Dispatch event for dashboard to refresh
+      window.dispatchEvent(new Event("fault-status-changed"));
+      return true;
+    }
+  } catch (err) {
+    console.error("Error fixing fault:", err);
+  }
+  return false;
+}
 if (!Auth.requireAuth()) {
   // requireAuth handles redirect
 } else {

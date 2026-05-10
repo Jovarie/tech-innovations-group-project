@@ -50,7 +50,7 @@ async function loadDashboard() {
     if (ts) ts.textContent = new Date().toLocaleTimeString();
   } catch (err) {
     document.getElementById("faults-body").innerHTML =
-      `<tr><td colspan="7" class="empty-state">${escapeHtml(err.message)}</td></tr>`;
+      `<tr><td colspan="8" class="empty-state">${escapeHtml(err.message)}</td></tr>`;
   }
 }
 
@@ -69,7 +69,7 @@ function renderFaults(faults) {
 
   const body = document.getElementById("faults-body");
   if (!faults.length) {
-    body.innerHTML = '<tr><td colspan="7" class="empty-state">No faults recorded.</td></tr>';
+    body.innerHTML = '<tr><td colspan="8" class="empty-state">No faults recorded.</td></tr>';
     return;
   }
 
@@ -81,6 +81,21 @@ function renderFaults(faults) {
     const notesTag = notes > 0
       ? `<span class="notes-badge" title="${notes} annotation${notes > 1 ? "s" : ""}">&#9998;&nbsp;${notes}</span>`
       : "";
+    
+    // Handle fixedAt timestamp
+    let fixedAtDisplay = "-";
+    if (f.status === "FIXED") {
+      if (f.fixedAt) {
+        fixedAtDisplay = formatDate(f.fixedAt);
+      } else if (f.resolvedAt) {
+        fixedAtDisplay = formatDate(f.resolvedAt);
+      } else if (f.updatedAt) {
+        fixedAtDisplay = formatDate(f.updatedAt);
+      } else {
+        fixedAtDisplay = "Just now";
+      }
+    }
+    
     return `<tr${rowClass}>
       <td>${escapeHtml(f.id)}</td>
       <td>${escapeHtml(f.title)}${notesTag}</td>
@@ -89,9 +104,55 @@ function renderFaults(faults) {
       <td><span class="badge ${pc}">${escapeHtml(f.priority)}</span></td>
       <td><span class="badge ${sc}">${escapeHtml(f.status)}</span></td>
       <td>${formatDate(f.reportedAt)}</td>
+      <td>${fixedAtDisplay}</td>
     </tr>`;
   }).join("");
 }
+
+// ─── Function to mark a fault as FIXED with live timestamp ───────────────────
+
+async function markFaultAsFixed(faultId) {
+  try {
+    const now = new Date();
+    const fixedAt = now.toISOString();
+    
+    const res = await Auth.fetch(`/api/faults/${faultId}/fix`, {
+      method: "PATCH",
+      body: JSON.stringify({ 
+        status: "FIXED",
+        fixedAt: fixedAt,
+        fixedBy: Auth.getUser()?.username || "unknown"
+      }),
+    });
+    
+    if (res.ok) {
+      await loadDashboard();
+      await loadAnalytics();
+      return true;
+    } else {
+      console.error("Failed to mark fault as fixed");
+      return false;
+    }
+  } catch (err) {
+    console.error("Error marking fault as fixed:", err);
+    return false;
+  }
+}
+
+// ─── Listen for status changes from scanner ─────────────────────────────────
+
+window.addEventListener("storage", (event) => {
+  if (event.key === "fault_status_update" || event.key === "fault_fixed") {
+    console.log("Fault status changed, refreshing dashboard...");
+    loadDashboard();
+    loadAnalytics();
+  }
+});
+
+window.addEventListener("fault-status-changed", () => {
+  loadDashboard();
+  loadAnalytics();
+});
 
 // ─── CYB-03: Zone access panel ───────────────────────────────────────────────
 
@@ -109,7 +170,7 @@ async function loadZones() {
     if (hasRestricted) {
       badgeEl.textContent    = "FULL CLEARANCE: " + (role || "").toUpperCase();
       badgeEl.className      = "zone-clearance-badge badge-cleared";
-      lockIconEl.textContent = "🔓"; // 🔓
+      lockIconEl.textContent = "🔓";
     } else {
       badgeEl.textContent = "STANDARD CLEARANCE: " + (role || "").toUpperCase();
       badgeEl.className   = "zone-clearance-badge badge-standard";
@@ -240,54 +301,177 @@ function renderPredictions(predictions) {
   }).join("");
 }
 
-// ─── Tool session panel ──────────────────────────────────────────────────────
+// ─── Tool session panel - TABLE STYLE (matching fault table) ─────────────────
 
-const REQUIRED_TOOLS = ["TOOL-WRENCH-01", "TOOL-MULTI-02", "TOOL-THERMAL-04"];
+// ─── Tool session panel - TABLE STYLE (showing ALL 7 tools) ────────────────────
 
 async function loadToolSession() {
-  const body    = document.getElementById("tool-alert-body");
-  const iconEl  = document.getElementById("tool-alert-icon");
+  const body = document.getElementById("tool-alert-body");
+  const iconEl = document.getElementById("tool-alert-icon");
+  
   try {
-    const res = await Auth.fetch("/api/tools/session");
-    if (!res.ok) throw new Error("unavailable");
-    const { activeTools, allTools } = await res.json();
-
-    if (!activeTools.length) {
-      body.innerHTML = '<div class="empty-state">No tools currently checked out.</div>';
-      iconEl.textContent = "&#128295;";
-      return;
-    }
-
+    // Fetch active session
+    const sessionRes = await Auth.fetch("/api/tools/session");
+    
+    if (!sessionRes.ok) throw new Error("Session unavailable");
+    
+    const { activeTools = [] } = await sessionRes.json();
+    
+    // Your 7 tools
+    const allToolsList = [
+      { id: "TOOL-WRENCH-01", name: "Adjustable Wrench", type: "hand", required: true },
+      { id: "TOOL-MULTI-02", name: "Multimeter", type: "electronic", required: true },
+      { id: "TOOL-TORCH-03", name: "Inspection Torch", type: "light", required: false },
+      { id: "TOOL-THERMAL-04", name: "Thermal Camera", type: "electronic", required: true },
+      { id: "TOOL-PROBE-06", name: "Voltage Probe", type: "electronic", required: false },
+      { id: "TOOL-TAPE-07", name: "Insulation Tape", type: "hand", required: false },
+      { id: "TOOL-GAUGE-05", name: "Crack Gauge", type: "hand", required: true }
+    ];
+    
     const now = Date.now();
     let hasAlert = false;
-    body.innerHTML = activeTools.map((t) => {
-      const info    = (allTools || []).find((a) => a.id === t.toolId) || {};
-      const name    = info.name || t.toolId;
-      const elapsed = Math.round((now - new Date(t.checkedOutAt).getTime()) / 60000);
-      const overdue = info.required && elapsed > 120;
-      if (overdue) hasAlert = true;
-      return `<div class="tool-session-row${overdue ? " tool-session-alert" : ""}">
-        <div class="tool-session-info">
-          <span class="tool-session-name">${escapeHtml(name)}</span>
-          ${t.faultId ? `<span class="tool-session-fault">&#128279;&nbsp;${escapeHtml(t.faultId)}</span>` : ""}
+    
+    // Create a map of active tools for quick lookup
+    const activeMap = new Map();
+    for (const t of activeTools) {
+      activeMap.set(t.toolId, t);
+    }
+    
+    // Stats
+    const checkedOutCount = activeTools.length;
+    const availableCount = allToolsList.length - checkedOutCount;
+    
+    // Table header with stats
+    let tableHtml = `
+      <div class="tool-session-table-wrap">
+        <div class="tool-stats-bar">
+          <span>🔧 Total Tools: ${allToolsList.length}</span>
+          <span> Checked Out: ${checkedOutCount}</span>
+          <span> Available: ${availableCount}</span>
         </div>
-        <div class="tool-session-right">
-          <span class="tool-session-time${overdue ? " tool-time-alert" : ""}">${elapsed}m out</span>
-          ${overdue ? `<span class="badge critical" style="font-size:9px;">OVERDUE</span>` : ""}
-        </div>
-      </div>`;
-    }).join("");
-
-    iconEl.textContent = hasAlert ? "⚠️" : "&#128295;";
-  } catch (_) {
+        <table class="tool-session-table">
+          <thead>
+            <tr>
+              <th>Tool ID</th>
+              <th>Tool Name</th>
+              <th>Type</th>
+              <th>Associated Fault</th>
+              <th>Status</th>
+              <th>Checked Out</th>
+              <th>Time Out</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+    
+    // Loop through ALL 7 tools
+    for (const tool of allToolsList) {
+      const active = activeMap.get(tool.id);
+      const isCheckedOut = !!active;
+      
+      let statusBadge = '';
+      let statusClass = '';
+      let elapsed = 0;
+      let checkedOutTime = '-';
+      let faultBadge = '-';
+      let overdue = false;
+      let rowClass = '';
+      
+      if (isCheckedOut) {
+        elapsed = Math.round((now - new Date(active.checkedOutAt).getTime()) / 60000);
+        overdue = (tool.required && elapsed > 120) || elapsed > 120;
+        if (overdue) {
+          hasAlert = true;
+          rowClass = 'row-overdue';
+        }
+        
+        checkedOutTime = formatDate(active.checkedOutAt);
+        
+        // Associated fault with clickable link
+        faultBadge = active.faultId 
+          ? `<span class="fault-link-badge" onclick="window.location.href='/scanner.html?fault=${active.faultId}'" style="cursor:pointer;">🔗 ${escapeHtml(active.faultId)}</span>`
+          : '-';
+        
+        // Status badge for checked out tools
+        if (overdue) {
+          statusBadge = 'OVERDUE';
+          statusClass = 'badge-critical';
+        } else if (elapsed > 60) {
+          statusBadge = 'LONG OUT';
+          statusClass = 'badge-warning';
+        } else {
+          statusBadge = 'IN USE';
+          statusClass = 'badge-active';
+        }
+      } else {
+        // Tool is NOT in use - grey status
+        statusBadge = 'NOT IN USE';
+        statusClass = 'badge-inactive';
+        rowClass = 'row-inactive';
+      }
+      
+      tableHtml += `
+        <tr class="${rowClass}">
+          <td class="tool-id-cell">${escapeHtml(tool.id)}</td>
+          <td class="tool-name-cell">🔧 ${escapeHtml(tool.name)}</td>
+          <td class="tool-type-cell">${escapeHtml(tool.type)}</td>
+          <td class="tool-fault-cell">${faultBadge}</td>
+          <td class="tool-status-cell"><span class="badge ${statusClass}">${statusBadge}</span></td>
+          <td class="tool-time-cell">${checkedOutTime}</td>
+          <td class="tool-elapsed-cell ${isCheckedOut && overdue ? 'elapsed-overdue' : ''}">${isCheckedOut ? elapsed + ' mins' : '-'}</td>
+          <td class="tool-action-cell">
+            ${isCheckedOut 
+              ? `<button class="btn-checkin" onclick="checkinTool('${escapeHtml(tool.id)}')">Check In</button>`
+              : `<button class="btn-checkout" onclick="checkoutTool('${escapeHtml(tool.id)}')">Check Out</button>`
+            }
+          </td>
+        </tr>
+      `;
+    }
+    
+    tableHtml += `
+          </tbody>
+        </table>
+      </div>
+    `;
+    
+    body.innerHTML = tableHtml;
+    iconEl.textContent = hasAlert ? "⚠️" : "🔧";
+    
+  } catch (err) {
     body.innerHTML = '<div class="empty-state">Tool session unavailable.</div>';
+    iconEl.textContent = "🔧";
   }
+}
+
+
+// Check-out function - redirects to tool tracker camera
+// Check-out function - redirects to tool tracker camera
+async function checkoutTool(toolId) {
+  // Store the tool ID so tool-tracker knows which tool to process
+  sessionStorage.setItem("pendingCheckoutTool", toolId);
+  // Redirect to tool tracker
+  window.location.href = "/tool-tracker.html";
+}
+
+// Check-in function - redirects to tool tracker camera
+async function checkinTool(toolId) {
+  // Store the tool ID so tool-tracker knows which tool to process
+  sessionStorage.setItem("pendingCheckinTool", toolId);
+  // Redirect to tool tracker
+  window.location.href = "/tool-tracker.html";
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function formatDate(iso) {
-  try { return new Date(iso).toLocaleString(); } catch { return iso; }
+  try { 
+    const date = new Date(iso);
+    return date.toLocaleString(); 
+  } catch { 
+    return iso; 
+  }
 }
 
 function escapeHtml(s) {

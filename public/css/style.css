@@ -1,5 +1,153 @@
 /* Shared AR / HUD theme used by every page */
-
+/* Tool Session Table Styles - matching fault table */
+/* Check-in and Check-out buttons - consistent styling */
+.btn-checkin, .btn-checkout {
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 5px 14px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  
+  .btn-checkin:hover, .btn-checkout:hover {
+    background: #059669;
+    transform: scale(1.02);
+  }
+  
+  /* Optional: Different color for checkout if you want distinction */
+  .btn-checkout {
+    background: transparent;
+    color: #cdeaf0;
+    border: 1px solid #4a5568;
+    padding: 5px 14px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  
+  .btn-checkout:hover {
+    background: rgba(37, 99, 235, 0.2);
+    border-color: #3b82f6;
+    color: #3b82f6;
+    transform: scale(1.02);
+  }
+.tool-session-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    margin-top: 12px;
+  }
+  
+  .tool-session-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  
+  .tool-session-table th {
+    text-align: left;
+    padding: 10px 8px;
+    background: rgba(0, 240, 255, 0.08);
+    color: #00f0ff;
+    font-weight: 600;
+    border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+  }
+  
+  .tool-session-table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: #cdeaf0;
+  }
+  
+  .tool-session-table tr:hover {
+    background: rgba(0, 240, 255, 0.05);
+  }
+  
+  .tool-session-table .row-overdue {
+    background: rgba(255, 77, 106, 0.1);
+  }
+  
+  .tool-id-cell {
+    font-family: monospace;
+    font-size: 11px;
+    color: #88ccff;
+  }
+  
+  .tool-name-cell {
+    font-weight: 500;
+  }
+  
+  .tool-fault-cell .fault-link-badge {
+    background: rgba(0, 240, 255, 0.15);
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-family: monospace;
+    color: #00f0ff;
+    transition: all 0.2s;
+    display: inline-block;
+  }
+  
+  .tool-fault-cell .fault-link-badge:hover {
+    background: rgba(0, 240, 255, 0.3);
+    transform: scale(1.02);
+  }
+  
+  .tool-elapsed-cell {
+    font-family: monospace;
+  }
+  
+  .tool-elapsed-cell.elapsed-overdue {
+    color: #ff4d6a;
+    font-weight: bold;
+  }
+  
+  .badge-critical {
+    background: #ff4d6a;
+    color: white;
+  }
+  
+  .badge-warning {
+    background: #ff9933;
+    color: #1a1a2e;
+  }
+  
+  .badge-active {
+    background: #00f0ff;
+    color: #1a1a2e;
+  }
+  
+  .btn-checkin {
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .btn-checkin:hover {
+    background: #059669;
+    transform: scale(1.02);
+  }
+  
+  .tool-session-table .badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
 :root {
     --hud-color: #00f0ff;
     --hud-color-dim: #4ec9d6;
