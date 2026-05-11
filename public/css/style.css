@@ -19,7 +19,7 @@
     transform: scale(1.02);
   }
   
-  /* Optional: Different color for checkout if you want distinction */
+  
   .btn-checkout {
     background: transparent;
     color: #cdeaf0;

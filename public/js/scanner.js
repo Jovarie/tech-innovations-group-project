@@ -6,7 +6,7 @@
 //   Step 3 — PATCH fault to FIXED, redirect to dashboard
 // SWE-04: Add Note submits annotations to POST /api/faults/:id/notes.
 
-// Add this function to your scanner.js
+
 async function markFaultAsFixed(faultId) {
   const now = new Date();
   const fixedAt = now.toISOString();

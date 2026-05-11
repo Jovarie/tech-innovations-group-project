@@ -317,7 +317,7 @@ async function loadToolSession() {
     
     const { activeTools = [] } = await sessionRes.json();
     
-    // Your 7 tools
+
     const allToolsList = [
       { id: "TOOL-WRENCH-01", name: "Adjustable Wrench", type: "hand", required: true },
       { id: "TOOL-MULTI-02", name: "Multimeter", type: "electronic", required: true },

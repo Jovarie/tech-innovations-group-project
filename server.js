@@ -16,7 +16,7 @@ const app = express();
 configureGlobalMiddleware(app);
 
 // 2. Mount Routers
-// This prefixes both sets of endpoints with /api, matching your original setup!
+
 app.use("/api", authRoutes);    // yields POST /api/login
 app.use("/api", faultRoutes);  // yields GET /api/faults, /api/faults/:id, /api/health
 app.use("/api", toolRoutes);   // yields GET/POST /api/tools/*
