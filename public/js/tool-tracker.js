@@ -146,26 +146,13 @@ async function tick() {
 
     if (qr) {
       const toolId = (qr.data || "").trim().split(/[\n\r]/)[0].trim();
-      if (toolId && TOOLS[toolId]) {
-        const loc    = qr.location;
-        const pts    = [loc.topLeftCorner, loc.topRightCorner, loc.bottomRightCorner, loc.bottomLeftCorner]
-          .map((p) => videoToScreen(p, video));
-        let minX = Infinity, maxX = -Infinity, minY = Infinity;
-        pts.forEach((c) => {
-          if (c.x < minX) minX = c.x;
-          if (c.x > maxX) maxX = c.x;
-          if (c.y < minY) minY = c.y;
-        });
-        positionLabel((minX + maxX) / 2, minY);
-
-        if (currentTool !== toolId) {
-          currentTool = toolId;
-          statusEl.textContent = "TOOL DETECTED";
-          await loadSession();
-          const isOut = sessionData.some((t) => t.toolId === toolId);
-          showLabel(toolId, isOut);
-          setTimeout(() => { if (scanning) statusEl.textContent = "SCANNING…"; }, 1500);
-        }
+      if (toolId && TOOLS[toolId] && currentTool !== toolId) {
+        currentTool = toolId;
+        statusEl.textContent = "TOOL DETECTED";
+        await loadSession();
+        const isOut = sessionData.some((t) => t.toolId === toolId);
+        showLabel(toolId, isOut);
+        setTimeout(() => { if (scanning) statusEl.textContent = "SCANNING…"; }, 1500);
       }
     }
   }
@@ -176,6 +163,7 @@ async function tick() {
 
 function showLabel(toolId, isOut) {
   const info = TOOLS[toolId];
+  lockLabel();
   tlTag.textContent    = isOut ? "CHECKED OUT" : "AVAILABLE";
   tlTag.className      = "label-tag";
   tlName.textContent   = info.name;
@@ -224,8 +212,11 @@ function hideLabel() {
   currentTool = null;
 }
 
-function positionLabel(x, y) {
-  labelEl.style.transform = `translate(${x + 20}px, ${y - 80}px)`;
+function lockLabel() {
+  const scene = document.getElementById("scene");
+  const cx = scene.clientWidth  / 2;
+  const cy = scene.clientHeight * 0.52;          // slightly below centre
+  labelEl.style.transform = `translate(calc(${cx}px - 50%), calc(${cy}px - 50%))`;
 }
 
 function videoToScreen(pt, vid) {
