@@ -32,11 +32,12 @@ const sessionCount  = document.getElementById("session-count");
 const historySection = document.getElementById("history-section");
 const historyList   = document.getElementById("history-list");
 
-let stream      = null;
-let scanning    = false;
-let currentTool = null;   // toolId of last detected QR
-let sessionData = [];
-let historyOpen = false;
+let stream        = null;
+let scanning      = false;
+let currentTool   = null;   // toolId of last detected QR
+let sessionData   = [];
+let localHistory  = [];     // client-side log — never wiped by stale server data
+let historyOpen   = false;
 
 function initTracker() {
   document.getElementById("start-btn").addEventListener("click", startCamera);
@@ -83,23 +84,34 @@ function renderSession() {
 }
 
 async function loadHistory() {
+  // Always show local session history immediately (never stale)
+  renderHistory(localHistory);
+  // Then try to enrich with server history from same instance
   try {
     const res = await Auth.fetch("/api/tools/history");
     if (!res.ok) return;
     const { history } = await res.json();
-    if (!history.length) {
-      historyList.innerHTML = '<div class="empty-state" style="padding:10px 12px;">No activity yet</div>';
-      return;
-    }
-    historyList.innerHTML = history.map((h) => {
-      const actionClass = h.action === "CHECKOUT" ? "tt-hist-out" : "tt-hist-in";
-      return `<div class="tt-hist-row">
-        <span class="tt-hist-action ${actionClass}">${h.action}</span>
-        <span class="tt-hist-name">${escapeHtml(h.toolName || h.toolId)}</span>
-        <span class="tt-hist-meta">${escapeHtml(h.user)} · ${formatTime(h.timestamp)}${h.faultId ? " · " + escapeHtml(h.faultId) : ""}</span>
-      </div>`;
-    }).join("");
+    if (!history.length) return;
+    // Merge: local events first (most recent), then any server events not already in local
+    const localTs = new Set(localHistory.map((h) => h.timestamp));
+    const merged  = [...localHistory, ...history.filter((h) => !localTs.has(h.timestamp))];
+    renderHistory(merged);
   } catch (_) {}
+}
+
+function renderHistory(history) {
+  if (!history.length) {
+    historyList.innerHTML = '<div class="empty-state" style="padding:10px 12px;">No activity yet</div>';
+    return;
+  }
+  historyList.innerHTML = history.slice(0, 50).map((h) => {
+    const actionClass = h.action === "CHECKOUT" ? "tt-hist-out" : "tt-hist-in";
+    return `<div class="tt-hist-row">
+      <span class="tt-hist-action ${actionClass}">${h.action}</span>
+      <span class="tt-hist-name">${escapeHtml(h.toolName || h.toolId)}</span>
+      <span class="tt-hist-meta">${escapeHtml(h.user)} · ${formatTime(h.timestamp)}${h.faultId ? " · " + escapeHtml(h.faultId) : ""}</span>
+    </div>`;
+  }).join("");
 }
 
 function toggleSession() {
@@ -236,21 +248,21 @@ async function checkoutTool(toolId, faultId) {
     });
     if (res.ok) {
       statusEl.textContent = "✓ CHECKED OUT";
-      // Update UI immediately — don't wait for a server round-trip that may hit
-      // a different instance with stale state
-      const already = sessionData.some((t) => t.toolId === toolId);
-      if (!already) {
-        sessionData.push({
-          toolId,
-          checkedOutAt: new Date().toISOString(),
-          faultId: faultId || null,
-        });
+      const now = new Date().toISOString();
+      // Update session locally — never overwrite with stale server data
+      if (!sessionData.some((t) => t.toolId === toolId)) {
+        sessionData.push({ toolId, checkedOutAt: now, faultId: faultId || null });
       }
+      // Log to local history
+      localHistory.unshift({
+        toolId, toolName: TOOLS[toolId]?.name || toolId,
+        action: "CHECKOUT",
+        user: (Auth.getUser && Auth.getUser()?.username) || "engineer",
+        faultId: faultId || null, timestamp: now,
+      });
       renderSession();
       sessionPanel.classList.remove("hidden");
       setTimeout(() => { if (scanning) statusEl.textContent = "SCANNING…"; }, 2000);
-      // Background sync to confirm server state
-      loadSession();
     } else {
       const body = await res.json().catch(() => ({}));
       statusEl.textContent = body.error || "CHECKOUT FAILED";
@@ -270,12 +282,19 @@ async function checkinTool(toolId) {
     });
     if (res.ok) {
       statusEl.textContent = "✓ CHECKED IN";
-      // Update UI immediately
+      const now      = new Date().toISOString();
+      const checkout = sessionData.find((t) => t.toolId === toolId);
+      // Update session locally
       sessionData = sessionData.filter((t) => t.toolId !== toolId);
+      // Log to local history
+      localHistory.unshift({
+        toolId, toolName: TOOLS[toolId]?.name || toolId,
+        action: "CHECKIN",
+        user: (Auth.getUser && Auth.getUser()?.username) || "engineer",
+        faultId: checkout?.faultId || null, timestamp: now,
+      });
       renderSession();
       setTimeout(() => { if (scanning) statusEl.textContent = "SCANNING…"; }, 2000);
-      // Background sync
-      loadSession();
     } else {
       const body = await res.json().catch(() => ({}));
       statusEl.textContent = body.error || "CHECKIN FAILED";
