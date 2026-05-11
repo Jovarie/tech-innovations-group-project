@@ -168,6 +168,7 @@ async function tick() {
         }
       }
     }
+  }
   requestAnimationFrame(tick);
 }
 
@@ -243,11 +244,20 @@ async function checkoutTool(toolId, faultId) {
       body: JSON.stringify({ toolId, faultId }),
     });
     if (res.ok) {
-      statusEl.textContent = "CHECKED OUT";
+      statusEl.textContent = "✓ CHECKED OUT";
       await loadSession();
-      setTimeout(() => { if (scanning) statusEl.textContent = "SCANNING…"; }, 1500);
+      // Open session panel so user can see the tool is now tracked
+      sessionPanel.classList.remove("hidden");
+      setTimeout(() => { if (scanning) statusEl.textContent = "SCANNING…"; }, 2000);
+    } else {
+      const body = await res.json().catch(() => ({}));
+      statusEl.textContent = body.error || "CHECKOUT FAILED";
+      setTimeout(() => { if (scanning) statusEl.textContent = "SCANNING…"; }, 2000);
     }
-  } catch (_) {}
+  } catch (_) {
+    statusEl.textContent = "NETWORK ERROR";
+    setTimeout(() => { if (scanning) statusEl.textContent = "SCANNING…"; }, 2000);
+  }
 }
 
 async function checkinTool(toolId) {
@@ -257,11 +267,18 @@ async function checkinTool(toolId) {
       body: JSON.stringify({ toolId }),
     });
     if (res.ok) {
-      statusEl.textContent = "CHECKED IN";
+      statusEl.textContent = "✓ CHECKED IN";
       await loadSession();
-      setTimeout(() => { if (scanning) statusEl.textContent = "SCANNING…"; }, 1500);
+      setTimeout(() => { if (scanning) statusEl.textContent = "SCANNING…"; }, 2000);
+    } else {
+      const body = await res.json().catch(() => ({}));
+      statusEl.textContent = body.error || "CHECKIN FAILED";
+      setTimeout(() => { if (scanning) statusEl.textContent = "SCANNING…"; }, 2000);
     }
-  } catch (_) {}
+  } catch (_) {
+    statusEl.textContent = "NETWORK ERROR";
+    setTimeout(() => { if (scanning) statusEl.textContent = "SCANNING…"; }, 2000);
+  }
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
