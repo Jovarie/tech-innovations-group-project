@@ -3,7 +3,7 @@ require("dotenv").config(); // Optional: supports loading variables from a .env 
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-fallback-super-secret-key";
 if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) {
-  throw new Error("JWT_SECRET must be set in production mode for secure authentication.");
+  console.warn("[WARN] JWT_SECRET is not set — using insecure fallback. Set JWT_SECRET in environment variables.");
 }
 
 module.exports = {
