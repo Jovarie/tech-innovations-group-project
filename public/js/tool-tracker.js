@@ -236,10 +236,21 @@ async function checkoutTool(toolId, faultId) {
     });
     if (res.ok) {
       statusEl.textContent = "✓ CHECKED OUT";
-      await loadSession();
-      // Open session panel so user can see the tool is now tracked
+      // Update UI immediately — don't wait for a server round-trip that may hit
+      // a different instance with stale state
+      const already = sessionData.some((t) => t.toolId === toolId);
+      if (!already) {
+        sessionData.push({
+          toolId,
+          checkedOutAt: new Date().toISOString(),
+          faultId: faultId || null,
+        });
+      }
+      renderSession();
       sessionPanel.classList.remove("hidden");
       setTimeout(() => { if (scanning) statusEl.textContent = "SCANNING…"; }, 2000);
+      // Background sync to confirm server state
+      loadSession();
     } else {
       const body = await res.json().catch(() => ({}));
       statusEl.textContent = body.error || "CHECKOUT FAILED";
@@ -259,8 +270,12 @@ async function checkinTool(toolId) {
     });
     if (res.ok) {
       statusEl.textContent = "✓ CHECKED IN";
-      await loadSession();
+      // Update UI immediately
+      sessionData = sessionData.filter((t) => t.toolId !== toolId);
+      renderSession();
       setTimeout(() => { if (scanning) statusEl.textContent = "SCANNING…"; }, 2000);
+      // Background sync
+      loadSession();
     } else {
       const body = await res.json().catch(() => ({}));
       statusEl.textContent = body.error || "CHECKIN FAILED";
