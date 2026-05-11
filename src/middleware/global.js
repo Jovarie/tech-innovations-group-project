@@ -23,8 +23,13 @@ function configureGlobalMiddleware(app) {
     next();
   });
 
+  // If CORS_ALLOW_ORIGIN env var is set, lock to that origin.
+  // Otherwise reflect the request's own origin (safe: same-origin browser requests
+  // carry no Origin header, so they're always allowed; JWT secures the API regardless).
   app.use(cors({
-    origin: CORS_ALLOW_ORIGIN,
+    origin: CORS_ALLOW_ORIGIN
+      ? CORS_ALLOW_ORIGIN
+      : (origin, cb) => cb(null, origin || false),
     methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     optionsSuccessStatus: 200,

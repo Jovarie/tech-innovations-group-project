@@ -11,6 +11,6 @@ module.exports = {
   JWT_SECRET,
   TOKEN_TTL: process.env.TOKEN_TTL || "1h",
   TRUST_PROXY: process.env.TRUST_PROXY === "true",
-  CORS_ALLOW_ORIGIN: process.env.CORS_ALLOW_ORIGIN || "http://localhost:3000",
+  CORS_ALLOW_ORIGIN: process.env.CORS_ALLOW_ORIGIN || null,
   FORCE_HTTPS: process.env.FORCE_HTTPS === "true",
 };
