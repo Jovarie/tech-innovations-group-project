@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>AR Maintenance // Fault QR Codes</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background: #f4f4f4;
+                padding: 24px;
+                text-align: center;
+            }
+            h1 {
+                font-size: 22px;
+                margin-bottom: 6px;
+            }
+            p {
+                color: #555;
+                margin-bottom: 24px;
+            }
+            .grid {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 32px;
+                justify-content: center;
+            }
+            .card {
+                background: #fff;
+                border: 1px solid #ddd;
+                border-radius: 10px;
+                padding: 24px 20px 16px;
+                text-align: center;
+                width: 200px;
+            }
+            .card canvas {
+                display: block;
+                margin: 0 auto;
+            }
+            .card .fault-id {
+                font-size: 11px;
+                color: #888;
+                margin-top: 10px;
+                font-family: monospace;
+            }
+            .card .fault-name {
+                font-size: 14px;
+                font-weight: bold;
+                margin-top: 4px;
+            }
+            .card .fault-location {
+                font-size: 11px;
+                color: #666;
+                margin-top: 4px;
+            }
+            .card .fault-badge {
+                display: inline-block;
+                margin-top: 8px;
+                font-size: 10px;
+                padding: 2px 8px;
+                border-radius: 20px;
+                background: #fee2e2;
+                color: #b91c1c;
+            }
+            .card .fault-tools {
+                font-size: 10px;
+                color: #999;
+                margin-top: 6px;
+                line-height: 1.4;
+            }
+            @media print {
+                button {
+                    display: none;
+                }
+                body {
+                    background: #fff;
+                    padding: 8px;
+                }
+            }
+            .print-btn {
+                display: inline-block;
+                margin-bottom: 28px;
+                padding: 10px 24px;
+                background: #0d1117;
+                color: #fff;
+                border: none;
+                border-radius: 6px;
+                font-size: 14px;
+                cursor: pointer;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>AR Fault Scanner &mdash; QR Codes</h1>
+        <p>
+            Print this page, cut out each card, and place it at the corresponding
+            fault location.<br />
+            The AR scanner will detect these codes and surface live fault data and
+            repair workflows.
+        </p>
+        <button class="print-btn" onclick="window.print()">
+            &#128438;&nbsp; Print / Save as PDF
+        </button>
+        <div class="grid" id="grid"></div>
+
+        <script src="/js/qrcode.min.js"></script>
+        <script>
+            const FAULTS = [
+                {
+                    id: "FAULT-101",
+                    name: "Signal Fault",
+                    location: "Track 1 — 10m right",
+                    tools: "Multimeter, Voltage Probe",
+                },
+                {
+                    id: "FAULT-102",
+                    name: "Cable Degradation",
+                    location: "Service Corridor B — 5m left",
+                    tools: "Wrench, Thermal Camera, Insulation Tape",
+                },
+                {
+                    id: "FAULT-103",
+                    name: "Structural Wear",
+                    location: "Tunnel Section B — 15m ahead",
+                    tools: "Inspection Torch, Crack Gauge",
+                },
+            ];
+
+            const grid = document.getElementById("grid");
+            FAULTS.forEach((fault) => {
+                const card = document.createElement("div");
+                card.className = "card";
+
+                const qrWrap = document.createElement("div");
+                new QRCode(qrWrap, { text: fault.id, width: 140, height: 140, correctLevel: QRCode.CorrectLevel.M });
+
+                const idEl = document.createElement("div");
+                idEl.className = "fault-id";
+                idEl.textContent = fault.id;
+
+                const nameEl = document.createElement("div");
+                nameEl.className = "fault-name";
+                nameEl.textContent = fault.name;
+
+                const locationEl = document.createElement("div");
+                locationEl.className = "fault-location";
+                locationEl.textContent = fault.location;
+
+                const badgeEl = document.createElement("div");
+                badgeEl.className = "fault-badge";
+                badgeEl.textContent = "FAULT MARKER";
+
+                const toolsEl = document.createElement("div");
+                toolsEl.className = "fault-tools";
+                toolsEl.textContent = "Tools: " + fault.tools;
+
+                card.appendChild(qrWrap);
+                card.appendChild(idEl);
+                card.appendChild(nameEl);
+                card.appendChild(locationEl);
+                card.appendChild(badgeEl);
+                card.appendChild(toolsEl);
+                grid.appendChild(card);
+            });
+        </script>
+    </body>
+</html>

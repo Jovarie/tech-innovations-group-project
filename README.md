@@ -134,12 +134,17 @@ Open that `https://` URL on any phone or device. Everyone hitting that URL share
 - Printable QR codes for all 7 physical tools
 - Print and attach to the actual tools before the demo
 
+### Fault QR Codes (`/fault-qrs.html`)
+- Printable QR codes for all 3 fault markers
+- Print and place at the physical fault locations before the demo
+- Also accessible via the **Fault QR Codes** button on the Dashboard
+
 ---
 
 ## 5. QR Codes
 
 ### Fault QR codes
-Print or display these on physical markers:
+Visit `/fault-qrs.html` on the running app to generate and print all fault QR codes.
 
 | QR Content | Fault | Location | Required Tools |
 |---|---|---|---|
