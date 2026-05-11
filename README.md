@@ -1,7 +1,7 @@
 # AR Maintenance Support System
-**TRL 3 Prototype · Tech Innovations Group 2**
+**TRL Prototype · Tech Innovations Group 2**
 
-Augmented-reality fault detection for public transport infrastructure. Engineers scan physical QR markers to surface live fault data, zone hazard information, and guided repair workflows — secured by JWT authentication and role-based access control.
+Augmented reality fault detection for public transport infrastructure. Engineers scan physical QR markers to surface live fault data, zone hazard information.
 
 ---
 
@@ -16,6 +16,15 @@ Augmented-reality fault detection for public transport infrastructure. Engineers
 8. [Troubleshooting](#8-troubleshooting)
 
 ---
+
+## Demo Credentials
+
+| Username | Password | Role | Access |
+|---|---|---|---|
+| `engineer` | `maintain123` | Senior Engineer | Full AR access, fault management, restricted zones |
+| `junior` | `tech123` | Junior Technician | Basic AR access |
+| `secadmin` | `admin123` | Security Admin | Full access including admin controls |
+| `auditor` | `audit123` | System Auditor | Read-only access |
 
 ## 1. Running Locally
 
@@ -96,18 +105,7 @@ Open that `https://` URL on any phone or device. Everyone hitting that URL share
 
 ---
 
-## 4. Demo Credentials
-
-| Username | Password | Role | Access |
-|---|---|---|---|
-| `engineer` | `maintain123` | Senior Engineer | Full AR access, fault management, restricted zones |
-| `junior` | `tech123` | Junior Technician | Basic AR access |
-| `secadmin` | `admin123` | Security Admin | Full access including admin controls |
-| `auditor` | `audit123` | System Auditor | Read-only access |
-
----
-
-## 5. App Overview
+## 4. App Overview
 
 ### Scanner (`/scanner.html`)
 - Point the camera at a fault QR code
@@ -138,7 +136,7 @@ Open that `https://` URL on any phone or device. Everyone hitting that URL share
 
 ---
 
-## 6. QR Codes
+## 5. QR Codes
 
 ### Fault QR codes
 Print or display these on physical markers:
@@ -164,7 +162,7 @@ Visit `/tool-qrs.html` on the running app to generate and print all tool QR code
 
 ---
 
-## 7. Deploying to Vercel
+## 6. Deploying to Vercel
 
 The app is deployed at the connected Vercel project. Every merge to `main` triggers a redeploy automatically.
 
@@ -190,7 +188,7 @@ Vercel runs multiple serverless instances. Without a shared store, fault updates
 
 ---
 
-## 8. Troubleshooting
+## 7. Troubleshooting
 
 | Problem | Fix |
 |---|---|
