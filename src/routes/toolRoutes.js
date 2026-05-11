@@ -56,9 +56,9 @@ const TOOLS = {
   "TOOL-MULTI-02":   { id: "TOOL-MULTI-02",   name: "Multimeter",        type: "electronic" },
   "TOOL-TORCH-03":   { id: "TOOL-TORCH-03",   name: "Inspection Torch",  type: "light"      },
   "TOOL-THERMAL-04": { id: "TOOL-THERMAL-04", name: "Thermal Camera",    type: "electronic" },
+  "TOOL-GAUGE-05":   { id: "TOOL-GAUGE-05",   name: "Crack Gauge",       type: "hand"       },
   "TOOL-PROBE-06":   { id: "TOOL-PROBE-06",   name: "Voltage Probe",     type: "electronic" },
   "TOOL-TAPE-07":    { id: "TOOL-TAPE-07",    name: "Insulation Tape",   type: "hand"       },
-  "TOOL-GAUGE-05":   { id: "TOOL-GAUGE-05",   name: "Crack Gauge",       type: "hand"       },
 };
 
 // GET /api/tools/session — current checkouts + full tool list

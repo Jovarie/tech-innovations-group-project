@@ -323,9 +323,10 @@ async function loadToolSession() {
       { id: "TOOL-MULTI-02", name: "Multimeter", type: "electronic", required: true },
       { id: "TOOL-TORCH-03", name: "Inspection Torch", type: "light", required: false },
       { id: "TOOL-THERMAL-04", name: "Thermal Camera", type: "electronic", required: true },
+      { id: "TOOL-GAUGE-05", name: "Crack Gauge", type: "hand", required: true },
       { id: "TOOL-PROBE-06", name: "Voltage Probe", type: "electronic", required: false },
       { id: "TOOL-TAPE-07", name: "Insulation Tape", type: "hand", required: false },
-      { id: "TOOL-GAUGE-05", name: "Crack Gauge", type: "hand", required: true }
+      
     ];
     
     const now = Date.now();

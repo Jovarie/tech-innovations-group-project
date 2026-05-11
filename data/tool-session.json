@@ -1,1 +1,14 @@
-[]
+[
+    {
+      "toolId": "TOOL-PROBE-06",
+      "checkedOutBy": "engineer",
+      "checkedOutAt": "2026-05-10T18:21:40.534Z",
+      "faultId": null
+    },
+    {
+      "toolId": "TOOL-MULTI-02",
+      "checkedOutBy": "engineer",
+      "checkedOutAt": "2026-05-10T18:22:04.950Z",
+      "faultId": null
+    }
+  ]

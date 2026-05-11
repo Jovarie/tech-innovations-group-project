@@ -91,9 +91,10 @@ function initScanner() {
     "TOOL-MULTI-02":   { name: "Multimeter",         type: "electronic" },
     "TOOL-TORCH-03":   { name: "Inspection Torch",   type: "light"      },
     "TOOL-THERMAL-04": { name: "Thermal Camera",     type: "electronic" },
+    "TOOL-GAUGE-05":   { name: "Crack Gauge",        type: "hand"       },       
     "TOOL-PROBE-06":   { name: "Voltage Probe",      type: "electronic" },
     "TOOL-TAPE-07":    { name: "Insulation Tape",    type: "hand"       },
-    "TOOL-GAUGE-05":   { name: "Crack Gauge",        type: "hand"       },
+    
   };
 
   // Per-fault required tool lists — only these need to be scanned to proceed
@@ -528,6 +529,7 @@ function initScanner() {
             lookupFault(id).then((result) => {
               if (panelLocked) return; // already handled
               if (result) {
+                drawMarker(corners, true);
                 showPanel(result, true);
               } else if (result === null) {
                 showPanel({ id }, false);

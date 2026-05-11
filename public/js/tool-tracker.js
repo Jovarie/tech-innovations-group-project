@@ -12,9 +12,10 @@ const TOOLS = {
   "TOOL-MULTI-02":   { name: "Multimeter",         type: "electronic" },
   "TOOL-TORCH-03":   { name: "Inspection Torch",   type: "light"      },
   "TOOL-THERMAL-04": { name: "Thermal Camera",     type: "electronic" },
+  "TOOL-GAUGE-05":   { name: "Crack Gauge",        type: "hand"       },
   "TOOL-PROBE-06":   { name: "Voltage Probe",      type: "electronic" },
   "TOOL-TAPE-07":    { name: "Insulation Tape",    type: "hand"       },
-  "TOOL-GAUGE-05":   { name: "Crack Gauge",        type: "hand"       },
+  
 };
 
 const video         = document.getElementById("tool-video");
